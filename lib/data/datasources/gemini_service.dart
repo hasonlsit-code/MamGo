@@ -4,7 +4,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:mamgo/data/models/user_preference.dart';
 
 class GeminiService {
-  static const _apiKey = 'YOUR_GEMINI_API_KEY_HERE'; // Thay bằng key từ aistudio.google.com/apikey
+  static const _apiKey = 'YOUR_GEMINI_API_KEY_HERE'; // Add your key from aistudio.google.com/apikey
   static const _modelName = 'gemini-2.5-flash';
 
   static ChatSession? _session;
