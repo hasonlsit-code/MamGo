@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
-import 'providers/user_preference_provider.dart';
-import 'screens/home/home_screen.dart';
-import 'screens/splash_screen.dart';
-import 'services/notification_service.dart';
-import 'theme/app_theme.dart';
+import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';
+import 'package:mamgo/presentation/pages/home_screen.dart';
+import 'package:mamgo/presentation/pages/splash_screen.dart';
+import 'package:mamgo/data/datasources/notification_service.dart';
+import 'package:mamgo/core/constants/app_theme.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
