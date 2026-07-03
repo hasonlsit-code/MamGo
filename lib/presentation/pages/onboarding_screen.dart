@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mamgo/data/models/user_preference.dart';
+import 'package:mamgo/presentation/viewmodels/auth_provider.dart';
 import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
 import 'package:mamgo/presentation/pages/home_screen.dart';
@@ -18,6 +19,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final _nameCtrl = TextEditingController();
   final Set<String> _tastes = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // Điền sẵn tên từ tài khoản đã đăng ký
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = context.read<AuthProvider>().user;
+      if (user != null && user.name.isNotEmpty && _nameCtrl.text.isEmpty) {
+        _nameCtrl.text = user.name;
+      }
+    });
+  }
+
   final Set<String> _diets = {};
   final Set<String> _cuisines = {};
 

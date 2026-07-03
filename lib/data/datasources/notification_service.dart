@@ -67,6 +67,33 @@ class NotificationService {
     );
   }
 
+  /// Thông báo chúc buổi sáng hằng ngày (id 4)
+  Future<void> scheduleMorningGreeting({int hour = 6, int minute = 30}) async {
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        _channelId,
+        _channelName,
+        channelDescription: 'Thông báo nhắc giờ ăn của MămGo',
+        importance: Importance.high,
+        priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
+      ),
+    );
+
+    await _plugin.zonedSchedule(
+      4,
+      '☀️ Chào buổi sáng!',
+      'Chúc bạn một ngày tốt lành! Nhớ ăn uống đầy đủ để khỏe mạnh nhé 🍀',
+      _nextOccurrence(hour, minute),
+      details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+      payload: 'chatbot',
+    );
+  }
+
   Future<void> cancel(int id) => _plugin.cancel(id);
   Future<void> cancelAll() => _plugin.cancelAll();
 

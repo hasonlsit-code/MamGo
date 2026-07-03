@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
+import 'package:mamgo/presentation/viewmodels/auth_provider.dart';
 import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';
 import 'package:mamgo/presentation/pages/home_screen.dart';
 import 'package:mamgo/presentation/pages/splash_screen.dart';
@@ -16,13 +17,10 @@ void main() async {
 
   await NotificationService().initialize(
     onNotificationTap: (_) {
-      // Khi tap notification → mở HomeScreen tab chatbot (index 1)
+      // Khi tap notification → mở HomeScreen tab chatbot (index 3)
       navigatorKey.currentState?.pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) => ChangeNotifierProvider(
-            create: (_) => UserPreferenceProvider()..load(),
-            child: const HomeScreen(initialTab: 1),
-          ),
+          builder: (_) => const HomeScreen(initialTab: 3),
         ),
         (_) => false,
       );
@@ -39,6 +37,7 @@ class MamGoApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => UserPreferenceProvider()),
       ],
       child: MaterialApp(

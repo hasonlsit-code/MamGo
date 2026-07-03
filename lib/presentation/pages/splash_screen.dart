@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:mamgo/presentation/viewmodels/auth_provider.dart';
 import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
+import 'package:mamgo/presentation/pages/login_screen.dart';
 import 'package:mamgo/presentation/pages/onboarding_screen.dart';
 import 'package:mamgo/presentation/pages/home_screen.dart';
 
@@ -33,6 +35,14 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _navigate() async {
     await Future.delayed(const Duration(milliseconds: 2400));
     if (!mounted) return;
+    final auth = context.read<AuthProvider>();
+    await auth.loadSession();
+    if (!mounted) return;
+    if (!auth.isLoggedIn) {
+      Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()));
+      return;
+    }
     final prov = context.read<UserPreferenceProvider>();
     await prov.load();
     if (!mounted) return;

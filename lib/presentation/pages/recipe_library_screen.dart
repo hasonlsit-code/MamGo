@@ -54,7 +54,7 @@ class _RecipeLibraryScreenState extends State<RecipeLibraryScreen> {
                   ),
                 ),
               ),
-              title: const Text('📖 Thư viện nấu ăn',
+              title: const Text('📖 Cẩm nang nấu ăn',
                   style: TextStyle(
                       color: Colors.white, fontWeight: FontWeight.bold)),
               centerTitle: false,

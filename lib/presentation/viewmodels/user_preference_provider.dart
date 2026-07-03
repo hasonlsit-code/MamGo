@@ -33,6 +33,9 @@ class UserPreferenceProvider extends ChangeNotifier {
     final p = _pref;
     if (p == null) return;
 
+    // Chúc buổi sáng hằng ngày trên điện thoại
+    await notif.scheduleMorningGreeting();
+
     if (p.breakfastReminder) {
       final parts = p.breakfastTime.split(':');
       await notif.scheduleMeal(

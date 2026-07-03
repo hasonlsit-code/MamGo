@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mamgo/data/datasources/foods_data.dart';
-import 'package:mamgo/data/datasources/recipes_data.dart';
 import 'package:mamgo/data/models/food.dart';
+import 'package:mamgo/presentation/viewmodels/auth_provider.dart';
 import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
 import 'package:mamgo/presentation/widgets/animated_mascot.dart';
 import 'package:mamgo/presentation/widgets/food_card.dart';
-import 'package:mamgo/presentation/widgets/home_mini_chat.dart';
-import 'package:mamgo/presentation/widgets/recipe_card.dart';
 import 'package:mamgo/presentation/pages/chatbot_screen.dart';
-import 'package:mamgo/presentation/pages/recipe_detail_screen.dart';
+import 'package:mamgo/presentation/pages/meal_analysis_screen.dart';
 import 'package:mamgo/presentation/pages/recipe_library_screen.dart';
 import 'package:mamgo/presentation/pages/notification_settings_screen.dart';
+import 'package:mamgo/presentation/pages/notifications_screen.dart';
 import 'package:mamgo/presentation/pages/food_detail_screen.dart';
+import 'package:mamgo/presentation/pages/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final int initialTab;
@@ -38,11 +39,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showHealthGreeting() {
+    final user = context.read<AuthProvider>().user;
     final pref = context.read<UserPreferenceProvider>().preference;
+    final name = (user?.name.isNotEmpty == true)
+        ? user!.name
+        : (pref?.name.isNotEmpty == true ? pref!.name : 'bạn');
     showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (_) => _HealthGreetingDialog(name: pref?.name ?? 'bạn'),
+      builder: (_) => _HealthGreetingDialog(name: name),
     );
   }
 
@@ -50,18 +55,21 @@ class _HomeScreenState extends State<HomeScreen> {
     BottomNavigationBarItem(
         icon: Icon(Icons.home_rounded), label: 'Trang chủ'),
     BottomNavigationBarItem(
-        icon: Icon(Icons.chat_bubble_rounded), label: 'MamGo'),
+        icon: Icon(Icons.lightbulb_outline_rounded), label: 'Gợi ý'),
     BottomNavigationBarItem(
-        icon: Icon(Icons.menu_book_rounded), label: 'Thư viện'),
+        icon: Icon(Icons.menu_book_rounded), label: 'Cẩm nang'),
     BottomNavigationBarItem(
-        icon: Icon(Icons.notifications_rounded), label: 'Nhắc nhở'),
+        icon: Icon(Icons.smart_toy_outlined), label: 'Chatbot'),
+    BottomNavigationBarItem(
+        icon: Icon(Icons.person_outline_rounded), label: 'Hồ sơ'),
   ];
 
   List<Widget> get _screens => [
         _HomeTab(onSwitchTab: (i) => setState(() => _tab = i)),
-        const ChatbotScreen(),
+        const MealAnalysisScreen(),
         const RecipeLibraryScreen(),
-        const NotificationSettingsScreen(),
+        const ChatbotScreen(),
+        const ProfileScreen(),
       ];
 
   @override
@@ -108,108 +116,662 @@ class _HomeScreenState extends State<HomeScreen> {
 
 // ─── Home Tab ─────────────────────────────────────────────────────────────────
 
-class _HomeTab extends StatelessWidget {
+class _HomeTab extends StatefulWidget {
   final void Function(int) onSwitchTab;
   const _HomeTab({required this.onSwitchTab});
 
   @override
+  State<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<_HomeTab> {
+  int? _mood;
+
+  static const _moods = [
+    (Icons.sentiment_satisfied_alt_rounded, 'Vui vẻ', <String>[]),
+    (Icons.work_outline_rounded, 'Bận rộn', ['quick', 'crispy']),
+    (Icons.sentiment_dissatisfied_rounded, 'Mệt', ['soup', 'warm', 'light']),
+    (Icons.eco_rounded, 'Muốn healthy', ['healthy', 'fresh', 'light']),
+  ];
+
+  @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().user;
     final pref = context.watch<UserPreferenceProvider>().preference;
+    final name = (user?.name.isNotEmpty == true)
+        ? user!.name
+        : (pref?.name.isNotEmpty == true ? pref!.name : 'bạn');
+
     final now = DateTime.now();
-    final hour = now.hour;
-    final greeting = hour < 12
-        ? 'Chào buổi sáng'
-        : hour < 18
-            ? 'Chào buổi chiều'
-            : 'Chào buổi tối';
-    final mealType =
-        hour < 10 ? 'breakfast' : hour < 15 ? 'lunch' : 'dinner';
-    final mealLabel =
-        hour < 10 ? 'bữa sáng' : hour < 15 ? 'bữa trưa' : 'bữa tối';
+    final meal = _NextMealInfo.compute(
+      now,
+      breakfast: pref?.breakfastTime ?? '07:00',
+      lunch: pref?.lunchTime ?? '12:00',
+      dinner: pref?.dinnerTime ?? '18:30',
+    );
 
-    List<Food> suggestions = FoodsData.all
-        .where((f) => f.mealType == mealType || f.mealType == 'any')
-        .toList();
-    if (pref != null) {
-      suggestions.sort((a, b) {
-        int scoreA = _score(a, pref.tastePreferences, pref.favoriteCuisines);
-        int scoreB = _score(b, pref.tastePreferences, pref.favoriteCuisines);
-        return scoreB.compareTo(scoreA);
-      });
-    }
-    final top = suggestions.take(8).toList();
-    final recipes = RecipesData.all.take(5).toList();
+    final suggestions = _buildSuggestions(pref);
 
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        _buildSliverAppBar(context, pref?.name ?? 'bạn', greeting),
-        SliverToBoxAdapter(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Mini Chat ────────────────────────────────
-              const SizedBox(height: 16),
-              const HomeMiniChat(),
-
-              // ── Meal banner ──────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: _mealBanner(mealLabel, mealType),
-              ),
-
-              // ── Food suggestions ─────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
-                child: _sectionHeader(
-                    context, 'Gợi ý $mealLabel hôm nay 🍽️'),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 248,
-                child: ListView.builder(
-                  padding: const EdgeInsets.only(left: 16),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: top.length,
-                  itemBuilder: (_, i) => FoodCard(
-                    food: top[i],
-                    onTap: () => Navigator.push(
-                      context,
-                      _premiumRoute(FoodDetailScreen(food: top[i])),
-                    ),
+    return SafeArea(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(context, name),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              child: _buildNextMealCard(meal),
+            ),
+            const SizedBox(height: 24),
+            _sectionHeader(
+              icon: Icons.favorite_border_rounded,
+              iconColor: AppTheme.primary,
+              title: 'Bạn đang cảm thấy thế nào?',
+            ),
+            const SizedBox(height: 12),
+            _buildMoodRow(),
+            const SizedBox(height: 24),
+            _sectionHeader(
+              icon: Icons.restaurant_menu_rounded,
+              iconColor: AppTheme.success,
+              title: 'Gợi ý món ngon cho bạn',
+              actionLabel: 'Xem tất cả',
+              onAction: () => widget.onSwitchTab(2),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 248,
+              child: ListView.builder(
+                padding: const EdgeInsets.only(left: 16),
+                scrollDirection: Axis.horizontal,
+                itemCount: suggestions.length,
+                itemBuilder: (_, i) => FoodCard(
+                  food: suggestions[i],
+                  onTap: () => Navigator.push(
+                    context,
+                    _premiumRoute(FoodDetailScreen(food: suggestions[i])),
                   ),
                 ),
               ),
+            ),
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _buildAiBanner(),
+            ),
+            const SizedBox(height: 24),
+            _sectionHeader(
+              icon: Icons.schedule_rounded,
+              iconColor: AppTheme.orange,
+              title: 'Lịch ăn hôm nay',
+              actionLabel: 'Điều chỉnh nhắc nhở',
+              onAction: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (_) => const NotificationSettingsScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _buildTodaySchedule(now, pref),
+            ),
+            const SizedBox(height: 28),
+          ],
+        ),
+      ),
+    );
+  }
 
-              // ── Recipe library ───────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
-                child: _sectionHeader(
-                  context,
-                  '📖 Thư viện công thức',
-                  onSeeAll: () => onSwitchTab(2),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+  // ── Header: logo + tên app + chuông + lời chào ─────────────────────────────
+  Widget _buildHeader(BuildContext context, String name) {
+    final hour = DateTime.now().hour;
+    final greeting = hour < 12
+        ? 'Chúc bạn buổi sáng tốt lành!'
+        : hour < 18
+            ? 'Chúc bạn buổi chiều vui vẻ!'
+            : 'Chúc bạn buổi tối ấm áp!';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const AnimatedMascot(size: 54),
+              const SizedBox(width: 12),
+              Expanded(
                 child: Column(
-                  children: recipes
-                      .map((r) => RecipeCard(
-                            recipe: r,
-                            onTap: () => Navigator.push(
-                              context,
-                              _premiumRoute(RecipeDetailScreen(recipe: r)),
-                            ),
-                          ))
-                      .toList(),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    RichText(
+                      text: const TextSpan(
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.3,
+                        ),
+                        children: [
+                          TextSpan(
+                              text: 'Mam',
+                              style: TextStyle(color: AppTheme.primary)),
+                          TextSpan(
+                              text: 'Go',
+                              style: TextStyle(color: AppTheme.orange)),
+                        ],
+                      ),
+                    ),
+                    const Text(
+                      'Ăn đúng giờ, sống khỏe mỗi ngày',
+                      style: TextStyle(
+                          color: AppTheme.textMedium, fontSize: 12),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 28),
+              _buildBell(),
             ],
           ),
+          const SizedBox(height: 18),
+          RichText(
+            text: TextSpan(
+              style: const TextStyle(fontSize: 22, color: AppTheme.textDark),
+              children: [
+                const TextSpan(text: 'Xin chào, '),
+                TextSpan(
+                  text: name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primary,
+                  ),
+                ),
+                const TextSpan(text: ' 👋'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            greeting,
+            style: const TextStyle(color: AppTheme.textMedium, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBell() {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+      ),
+      child: Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-      ],
+        child: Stack(
+          children: [
+            const Center(
+              child: Icon(Icons.notifications_none_rounded,
+                  color: AppTheme.textDark, size: 24),
+            ),
+            Positioned(
+              top: 10,
+              right: 11,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: AppTheme.orange,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Thẻ bữa tiếp theo (gradient cam) ───────────────────────────────────────
+  Widget _buildNextMealCard(_NextMealInfo meal) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.orange.withValues(alpha: 0.2),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Khối giờ ăn bên trái
+          Container(
+            width: 120,
+            padding: const EdgeInsets.symmetric(vertical: 22),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: AppTheme.orangeGradient,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(22),
+                bottomLeft: Radius.circular(22),
+              ),
+            ),
+            child: Column(
+              children: [
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.calendar_today_rounded,
+                        color: Colors.white, size: 13),
+                    SizedBox(width: 5),
+                    Text(
+                      'Bữa tiếp theo',
+                      style: TextStyle(color: Colors.white, fontSize: 11),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  meal.label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                Text(
+                  meal.time,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Nội dung bên phải
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Còn ${meal.countdown} nữa là đến ${meal.mealName}',
+                          style: const TextStyle(
+                            color: AppTheme.textDark,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Đừng quên ăn đúng giờ nhé!',
+                          style: TextStyle(
+                              color: AppTheme.textMedium, fontSize: 12),
+                        ),
+                        const SizedBox(height: 10),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: meal.progress,
+                            minHeight: 6,
+                            backgroundColor: const Color(0xFFFFE5CC),
+                            valueColor: const AlwaysStoppedAnimation(
+                                AppTheme.orange),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl: meal.photoUrl,
+                      width: 58,
+                      height: 58,
+                      fit: BoxFit.cover,
+                      placeholder: (_, _) => Container(
+                          width: 58,
+                          height: 58,
+                          color: const Color(0xFFFFF3E5)),
+                      errorWidget: (_, _, _) => Container(
+                        width: 58,
+                        height: 58,
+                        color: const Color(0xFFFFF3E5),
+                        child: const Center(
+                            child:
+                                Text('🥗', style: TextStyle(fontSize: 28))),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Hàng chọn tâm trạng ────────────────────────────────────────────────────
+  Widget _buildMoodRow() {
+    return SizedBox(
+      height: 110,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        scrollDirection: Axis.horizontal,
+        itemCount: _moods.length,
+        itemBuilder: (_, i) {
+          final selected = _mood == i;
+          final isHealthy = i == 3;
+          final color = isHealthy ? AppTheme.success : AppTheme.primary;
+          return GestureDetector(
+            onTap: () => setState(() => _mood = selected ? null : i),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 100,
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                color: selected ? color.withValues(alpha: 0.1) : Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: selected ? color : const Color(0xFFE2EAF4),
+                  width: selected ? 2 : 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(_moods[i].$1, color: color, size: 22),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _moods[i].$2,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ── Banner AI MamGo ────────────────────────────────────────────────────────
+  Widget _buildAiBanner() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF3FE),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        children: [
+          const AnimatedMascot(size: 62),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Trò chuyện với',
+                  style:
+                      TextStyle(color: AppTheme.textMedium, fontSize: 12),
+                ),
+                RichText(
+                  text: const TextSpan(
+                    style: TextStyle(
+                        fontSize: 19, fontWeight: FontWeight.w900),
+                    children: [
+                      TextSpan(
+                          text: 'AI Mam',
+                          style: TextStyle(color: AppTheme.primary)),
+                      TextSpan(
+                          text: 'Go',
+                          style: TextStyle(color: AppTheme.orange)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 3),
+                const Text(
+                  'Gợi ý thực đơn theo sở thích, đảm bảo dinh dưỡng cho bạn.',
+                  style:
+                      TextStyle(color: AppTheme.textMedium, fontSize: 11.5),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          GestureDetector(
+            onTap: () => widget.onSwitchTab(3),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+              decoration: BoxDecoration(
+                color: AppTheme.primary,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primary.withValues(alpha: 0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Row(
+                children: [
+                  Text(
+                    'Chat ngay',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(width: 4),
+                  Icon(Icons.chevron_right_rounded,
+                      color: Colors.white, size: 18),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Lịch ăn hôm nay ────────────────────────────────────────────────────────
+  Widget _buildTodaySchedule(DateTime now, dynamic pref) {
+    final meals = [
+      ('Bữa sáng', pref?.breakfastTime ?? '07:00'),
+      ('Bữa trưa', pref?.lunchTime ?? '12:00'),
+      ('Bữa tối', pref?.dinnerTime ?? '18:30'),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2EAF4)),
+      ),
+      child: Column(
+        children: List.generate(meals.length, (i) {
+          final (label, time) = meals[i];
+          final t = _NextMealInfo.parseToday(now, time);
+          final done = now.isAfter(t);
+          return Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            decoration: BoxDecoration(
+              border: i < meals.length - 1
+                  ? const Border(
+                      bottom: BorderSide(color: Color(0xFFEFF3F9)))
+                  : null,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  done
+                      ? Icons.check_circle_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  color: done ? AppTheme.success : AppTheme.textMedium,
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 48,
+                  child: Text(
+                    time,
+                    style: const TextStyle(
+                      color: AppTheme.textDark,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                        color: AppTheme.textDark, fontSize: 14),
+                  ),
+                ),
+                Text(
+                  done ? 'Đã hoàn thành' : 'Sắp tới',
+                  style: TextStyle(
+                    color: done ? AppTheme.success : AppTheme.orange,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // ── Tiện ích ───────────────────────────────────────────────────────────────
+  List<Food> _buildSuggestions(dynamic pref) {
+    final hour = DateTime.now().hour;
+    final mealType =
+        hour < 10 ? 'breakfast' : hour < 15 ? 'lunch' : 'dinner';
+    final moodTags = _mood != null ? _moods[_mood!].$3 : const <String>[];
+
+    List<Food> list = FoodsData.all
+        .where((f) => f.mealType == mealType || f.mealType == 'any')
+        .toList();
+
+    int score(Food f) {
+      int s = 0;
+      for (final t in moodTags) {
+        if (f.tags.contains(t)) s += 5;
+      }
+      if (pref != null) {
+        for (final t in pref.tastePreferences) {
+          if (f.tags.contains(t)) s += 2;
+        }
+        for (final c in pref.favoriteCuisines) {
+          if (f.cuisines.contains(c)) s += 3;
+        }
+      }
+      return s;
+    }
+
+    list.sort((a, b) => score(b).compareTo(score(a)));
+    return list.take(8).toList();
+  }
+
+  Widget _sectionHeader({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Icon(icon, color: iconColor, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textDark,
+              ),
+            ),
+          ),
+          if (actionLabel != null)
+            GestureDetector(
+              onTap: onAction,
+              child: Row(
+                children: [
+                  Text(
+                    actionLabel,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: AppTheme.primary, size: 18),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -223,8 +785,8 @@ class _HomeTab extends StatelessWidget {
             position: Tween<Offset>(
               begin: const Offset(0, 0.04),
               end: Offset.zero,
-            ).animate(CurvedAnimation(
-                parent: animation, curve: Curves.easeOut)),
+            ).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOut)),
             child: child,
           ),
         );
@@ -232,253 +794,95 @@ class _HomeTab extends StatelessWidget {
       transitionDuration: const Duration(milliseconds: 320),
     );
   }
+}
 
-  Widget _buildSliverAppBar(
-      BuildContext context, String name, String greeting) {
-    return SliverAppBar(
-      expandedHeight: 170,
-      floating: false,
-      pinned: true,
-      stretch: true,
-      backgroundColor: AppTheme.primaryDark,
-      flexibleSpace: FlexibleSpaceBar(
-        stretchModes: const [StretchMode.zoomBackground],
-        background: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Gradient
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppTheme.primaryDark, AppTheme.primary],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-            ),
-            // Decorative circles (premium feel)
-            Positioned(
-              top: -30,
-              right: 70,
-              child: Container(
-                width: 130,
-                height: 130,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.06),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 14,
-              right: -18,
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.08),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -12,
-              left: 180,
-              child: Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.05),
-                ),
-              ),
-            ),
-            // Content
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 3),
-                            decoration: BoxDecoration(
-                              color:
-                                  Colors.white.withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              _formatDate(DateTime.now()),
-                              style: const TextStyle(
-                                  color: Colors.white70, fontSize: 11),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '$greeting,',
-                            style: const TextStyle(
-                                color: Colors.white70, fontSize: 13),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            name,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const AnimatedMascot(size: 66),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        title: const Text(
-          'MămGo',
-          style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 18),
-        ),
-        centerTitle: false,
-        titlePadding: const EdgeInsets.only(left: 20, bottom: 14),
-      ),
+// ─── Thông tin bữa tiếp theo ──────────────────────────────────────────────────
+
+class _NextMealInfo {
+  final String label; // SÁNG | TRƯA | TỐI
+  final String mealName; // bữa sáng | bữa trưa | bữa tối
+  final String time; // HH:mm
+  final String countdown; // "2h 18m"
+  final double progress; // 0..1 giữa bữa trước và bữa tiếp theo
+  final String photoUrl;
+
+  const _NextMealInfo({
+    required this.label,
+    required this.mealName,
+    required this.time,
+    required this.countdown,
+    required this.progress,
+    required this.photoUrl,
+  });
+
+  // Ảnh thật minh họa cho từng bữa
+  static const _photos = {
+    'SÁNG':
+        'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=300&h=300&fit=crop&q=80',
+    'TRƯA':
+        'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&h=300&fit=crop&q=80',
+    'TỐI':
+        'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=300&h=300&fit=crop&q=80',
+  };
+
+  static DateTime parseToday(DateTime now, String hhmm) {
+    final parts = hhmm.split(':');
+    return DateTime(
+      now.year,
+      now.month,
+      now.day,
+      int.tryParse(parts[0]) ?? 0,
+      parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0,
     );
   }
 
-  Widget _mealBanner(String label, String mealType) {
-    final emojis = {
-      'breakfast': '🌅',
-      'lunch': '☀️',
-      'dinner': '🌙'
-    };
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppTheme.primaryDark, AppTheme.primary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primary.withValues(alpha: 0.3),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Text(emojis[mealType] ?? '🍽️',
-              style: const TextStyle(fontSize: 40)),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Đến giờ $label!',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 2),
-                const Text(
-                  'MămGo đã chuẩn bị gợi ý ngon cho bạn 😋',
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _sectionHeader(BuildContext context, String title,
-      {VoidCallback? onSeeAll}) {
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 20,
-          decoration: BoxDecoration(
-            color: AppTheme.primary,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textDark,
-            letterSpacing: 0.1,
-          ),
-        ),
-        const Spacer(),
-        if (onSeeAll != null)
-          GestureDetector(
-            onTap: onSeeAll,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppTheme.chipBg,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                    color: AppTheme.primary.withValues(alpha: 0.25)),
-              ),
-              child: const Text(
-                'Xem tất cả',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  String _formatDate(DateTime d) {
-    const days = [
-      'CN', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'
+  static _NextMealInfo compute(
+    DateTime now, {
+    required String breakfast,
+    required String lunch,
+    required String dinner,
+  }) {
+    final meals = [
+      ('SÁNG', 'bữa sáng', breakfast, parseToday(now, breakfast)),
+      ('TRƯA', 'bữa trưa', lunch, parseToday(now, lunch)),
+      ('TỐI', 'bữa tối', dinner, parseToday(now, dinner)),
     ];
-    const months = [
-      '', 'tháng 1', 'tháng 2', 'tháng 3', 'tháng 4', 'tháng 5',
-      'tháng 6', 'tháng 7', 'tháng 8', 'tháng 9', 'tháng 10',
-      'tháng 11', 'tháng 12'
-    ];
-    return '${days[d.weekday % 7]}, ${d.day} ${months[d.month]}';
-  }
 
-  int _score(Food food, List<String> tastes, List<String> cuisines) {
-    int s = 0;
-    for (final t in tastes) {
-      if (food.tags.contains(t)) s += 2;
+    (String, String, String, DateTime)? next;
+    DateTime prev = DateTime(now.year, now.month, now.day); // 00:00
+    for (final m in meals) {
+      if (m.$4.isAfter(now)) {
+        next = m;
+        break;
+      }
+      prev = m.$4;
     }
-    for (final c in cuisines) {
-      if (food.cuisines.contains(c)) s += 3;
-    }
-    return s;
+    // Đã qua bữa tối → bữa tiếp theo là bữa sáng ngày mai
+    next ??= (
+      'SÁNG',
+      'bữa sáng',
+      breakfast,
+      parseToday(now, breakfast).add(const Duration(days: 1)),
+    );
+
+    final remaining = next.$4.difference(now);
+    final hours = remaining.inHours;
+    final minutes = remaining.inMinutes % 60;
+    final countdown = hours > 0 ? '${hours}h ${minutes}m' : '${minutes}m';
+
+    final total = next.$4.difference(prev).inMinutes;
+    final elapsed = now.difference(prev).inMinutes;
+    final progress =
+        total <= 0 ? 0.0 : (elapsed / total).clamp(0.0, 1.0);
+
+    return _NextMealInfo(
+      label: next.$1,
+      mealName: next.$2,
+      time: next.$3,
+      countdown: countdown,
+      progress: progress,
+      photoUrl: _photos[next.$1]!,
+    );
   }
 }
 

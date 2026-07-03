@@ -1,20 +1,34 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color primary = Color(0xFF43A047);
-  static const Color primaryDark = Color(0xFF2E7D32);
-  static const Color secondary = Color(0xFF66BB6A);
-  static const Color background = Color(0xFFF2FAF2);
+  // Bảng màu thương hiệu MamGo: xanh dương + cam
+  static const Color primary = Color(0xFF1E88E5);
+  static const Color primaryDark = Color(0xFF1565C0);
+  static const Color secondary = Color(0xFF42A5F5);
+  static const Color orange = Color(0xFFFF8A00);
+  static const Color orangeDark = Color(0xFFF57C00);
+  static const Color success = Color(0xFF2E9E5B);
+  static const Color background = Color(0xFFF6F9FE);
   static const Color cardBg = Color(0xFFFFFFFF);
-  static const Color textDark = Color(0xFF1B3A1B);
-  static const Color textMedium = Color(0xFF5C8B5C);
-  static const Color accent = Color(0xFF8BC34A);
-  static const Color chipBg = Color(0xFFE8F5E9);
+  static const Color textDark = Color(0xFF17223B);
+  static const Color textMedium = Color(0xFF66788F);
+  static const Color accent = Color(0xFFFF8A00);
+  static const Color chipBg = Color(0xFFE7F0FC);
 
   static const List<Color> backgroundGradient = [
-    Color(0xFFEDF7ED),
-    Color(0xFFF5FBF5),
-    Color(0xFFE8F5E8),
+    Color(0xFFF2F7FE),
+    Color(0xFFFDFEFF),
+    Color(0xFFEFF5FD),
+  ];
+
+  static const List<Color> brandGradient = [
+    Color(0xFF1E88E5),
+    Color(0xFFFF8A00),
+  ];
+
+  static const List<Color> orangeGradient = [
+    Color(0xFFFF9800),
+    Color(0xFFFF6D00),
   ];
 
   static ThemeData get light {
@@ -53,11 +67,11 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFB2DFDB)),
+          borderSide: const BorderSide(color: Color(0xFFD3E2F5)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFB2DFDB)),
+          borderSide: const BorderSide(color: Color(0xFFD3E2F5)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

@@ -86,8 +86,7 @@ class _NotificationSettingsScreenState
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('🔔 Nhắc nhở ăn uống'),
-        automaticallyImplyLeading: false,
+        title: const Text('🔔 Điều chỉnh nhắc nhở'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(18),
