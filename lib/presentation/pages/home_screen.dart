@@ -28,6 +28,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late int _tab;
+  // Vị trí icon MamGo bot do người dùng kéo thả (null = góc dưới phải mặc định)
+  Offset? _botOffset;
+  // Điểm ngón tay chạm bên trong icon lúc bắt đầu kéo
+  Offset _botGrab = Offset.zero;
+  static const _botSize = 58.0;
 
   @override
   void initState() {
@@ -77,33 +82,54 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final botEnabled = context.watch<BotSettingsProvider>().enabled;
+    final topPad = MediaQuery.of(context).padding.top;
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: AppTheme.backgroundGradient,
-                stops: [0.0, 0.5, 1.0],
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
+      body: LayoutBuilder(
+        builder: (context, box) {
+          // Mặc định góc dưới phải; sau đó theo vị trí người dùng kéo thả
+          final pos = _botOffset ??
+              Offset(box.maxWidth - _botSize - 16,
+                  box.maxHeight - _botSize - 20);
+          return Stack(
+            children: [
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: AppTheme.backgroundGradient,
+                    stops: [0.0, 0.5, 1.0],
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
+                  ),
+                ),
+                child: IndexedStack(index: _tab, children: _screens),
               ),
-            ),
-            child: IndexedStack(index: _tab, children: _screens),
-          ),
-          // MamGo bot nổi xuyên suốt app (ẩn ở tab Chatbot để tránh trùng lặp)
-          Positioned(
-            right: 16,
-            bottom: 20,
-            child: SafeArea(
-              child: Visibility(
-                visible: botEnabled && _tab != 3,
-                maintainState: true,
-                child: const FloatingBot(),
+              // MamGo bot nổi xuyên suốt app (ẩn ở tab Chatbot để tránh trùng
+              // lặp). Kéo thả tự do, tự giới hạn trong màn hình.
+              Positioned(
+                left: pos.dx,
+                top: pos.dy,
+                child: Visibility(
+                  visible: botEnabled && _tab != 3,
+                  maintainState: true,
+                  child: GestureDetector(
+                    onPanStart: (d) => _botGrab = d.localPosition,
+                    // Bám theo tọa độ ngón tay 1:1 (không cộng dồn delta
+                    // để tránh trễ khi kéo nhanh)
+                    onPanUpdate: (d) => setState(() {
+                      final next = d.globalPosition - _botGrab;
+                      _botOffset = Offset(
+                        next.dx.clamp(4.0, box.maxWidth - _botSize - 4),
+                        next.dy.clamp(
+                            topPad + 4, box.maxHeight - _botSize - 4),
+                      );
+                    }),
+                    child: const FloatingBot(),
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(

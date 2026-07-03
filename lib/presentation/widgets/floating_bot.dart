@@ -59,7 +59,7 @@ class _FloatingBotState extends State<FloatingBot>
             topRight: Radius.circular(24),
           ),
           child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.88,
+            height: MediaQuery.of(context).size.height * 0.68,
             child: const ChatbotScreen(isPopup: true),
           ),
         ),
@@ -69,63 +69,71 @@ class _FloatingBotState extends State<FloatingBot>
 
   @override
   Widget build(BuildContext context) {
+    // Khung widget cố định 58x58 (chỉ icon) để điểm neo kéo-thả ổn định;
+    // bong bóng lời chào vẽ tràn ra bên trái, không chiếm layout.
     return AnimatedBuilder(
       animation: _float,
       builder: (_, child) =>
           Transform.translate(offset: Offset(0, _float.value), child: child),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Bong bóng lời chào
-          AnimatedOpacity(
-            opacity: _showBubble ? 1 : 0,
-            duration: const Duration(milliseconds: 350),
-            child: AnimatedScale(
-              scale: _showBubble ? 1 : 0.85,
-              duration: const Duration(milliseconds: 350),
-              alignment: Alignment.centerRight,
-              child: _showBubble
-                  ? Container(
-                      constraints: const BoxConstraints(maxWidth: 210),
-                      margin: const EdgeInsets.only(right: 10),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          topRight: Radius.circular(16),
-                          bottomLeft: Radius.circular(16),
-                          bottomRight: Radius.circular(4),
-                        ),
-                        border: Border.all(
-                            color:
-                                AppTheme.primary.withValues(alpha: 0.2)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.12),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
+      child: SizedBox(
+        width: 58,
+        height: 58,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Bong bóng lời chào (tràn sang trái icon)
+            Positioned(
+              right: 68,
+              bottom: 4,
+              child: AnimatedOpacity(
+                opacity: _showBubble ? 1 : 0,
+                duration: const Duration(milliseconds: 350),
+                child: AnimatedScale(
+                  scale: _showBubble ? 1 : 0.85,
+                  duration: const Duration(milliseconds: 350),
+                  alignment: Alignment.centerRight,
+                  child: _showBubble
+                      ? Container(
+                          constraints: const BoxConstraints(maxWidth: 210),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(16),
+                              topRight: Radius.circular(16),
+                              bottomLeft: Radius.circular(16),
+                              bottomRight: Radius.circular(4),
+                            ),
+                            border: Border.all(
+                                color:
+                                    AppTheme.primary.withValues(alpha: 0.2)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.12),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: const Text(
-                        'Mình là MamGo bot, cần gì hãy nói mình nhé! 👋',
-                        style: TextStyle(
-                          color: AppTheme.textDark,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          height: 1.4,
-                        ),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
+                          child: const Text(
+                            'Mình là MamGo bot, cần gì hãy nói mình nhé! 👋',
+                            style: TextStyle(
+                              color: AppTheme.textDark,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
             ),
-          ),
-          // Icon bot
-          GestureDetector(
-            onTap: _openChat,
-            child: Container(
+            // Icon bot
+            GestureDetector(
+              onTap: _openChat,
+              child: Container(
               width: 58,
               height: 58,
               decoration: BoxDecoration(
@@ -167,8 +175,9 @@ class _FloatingBotState extends State<FloatingBot>
                 ],
               ),
             ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
