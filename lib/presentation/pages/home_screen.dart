@@ -4,9 +4,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mamgo/data/datasources/foods_data.dart';
 import 'package:mamgo/data/models/food.dart';
 import 'package:mamgo/presentation/viewmodels/auth_provider.dart';
+import 'package:mamgo/presentation/viewmodels/bot_settings_provider.dart';
 import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
 import 'package:mamgo/presentation/widgets/animated_mascot.dart';
+import 'package:mamgo/presentation/widgets/floating_bot.dart';
 import 'package:mamgo/presentation/widgets/food_card.dart';
 import 'package:mamgo/presentation/pages/chatbot_screen.dart';
 import 'package:mamgo/presentation/pages/meal_analysis_screen.dart';
@@ -55,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
     BottomNavigationBarItem(
         icon: Icon(Icons.home_rounded), label: 'Trang chủ'),
     BottomNavigationBarItem(
-        icon: Icon(Icons.lightbulb_outline_rounded), label: 'Gợi ý'),
+        icon: Icon(Icons.lightbulb_outline_rounded), label: 'Đo lường'),
     BottomNavigationBarItem(
         icon: Icon(Icons.menu_book_rounded), label: 'Cẩm nang'),
     BottomNavigationBarItem(
@@ -74,17 +76,34 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final botEnabled = context.watch<BotSettingsProvider>().enabled;
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: AppTheme.backgroundGradient,
-            stops: [0.0, 0.5, 1.0],
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: AppTheme.backgroundGradient,
+                stops: [0.0, 0.5, 1.0],
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+              ),
+            ),
+            child: IndexedStack(index: _tab, children: _screens),
           ),
-        ),
-        child: IndexedStack(index: _tab, children: _screens),
+          // MamGo bot nổi xuyên suốt app (ẩn ở tab Chatbot để tránh trùng lặp)
+          Positioned(
+            right: 16,
+            bottom: 20,
+            child: SafeArea(
+              child: Visibility(
+                visible: botEnabled && _tab != 3,
+                maintainState: true,
+                child: const FloatingBot(),
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -125,15 +144,6 @@ class _HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<_HomeTab> {
-  int? _mood;
-
-  static const _moods = [
-    (Icons.sentiment_satisfied_alt_rounded, 'Vui vẻ', <String>[]),
-    (Icons.work_outline_rounded, 'Bận rộn', ['quick', 'crispy']),
-    (Icons.sentiment_dissatisfied_rounded, 'Mệt', ['soup', 'warm', 'light']),
-    (Icons.eco_rounded, 'Muốn healthy', ['healthy', 'fresh', 'light']),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
@@ -164,13 +174,10 @@ class _HomeTabState extends State<_HomeTab> {
               child: _buildNextMealCard(meal),
             ),
             const SizedBox(height: 24),
-            _sectionHeader(
-              icon: Icons.favorite_border_rounded,
-              iconColor: AppTheme.primary,
-              title: 'Bạn đang cảm thấy thế nào?',
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _buildProBanner(context),
             ),
-            const SizedBox(height: 12),
-            _buildMoodRow(),
             const SizedBox(height: 24),
             _sectionHeader(
               icon: Icons.restaurant_menu_rounded,
@@ -194,11 +201,6 @@ class _HomeTabState extends State<_HomeTab> {
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildAiBanner(),
             ),
             const SizedBox(height: 24),
             _sectionHeader(
@@ -477,150 +479,95 @@ class _HomeTabState extends State<_HomeTab> {
     );
   }
 
-  // ── Hàng chọn tâm trạng ────────────────────────────────────────────────────
-  Widget _buildMoodRow() {
-    return SizedBox(
-      height: 110,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        scrollDirection: Axis.horizontal,
-        itemCount: _moods.length,
-        itemBuilder: (_, i) {
-          final selected = _mood == i;
-          final isHealthy = i == 3;
-          final color = isHealthy ? AppTheme.success : AppTheme.primary;
-          return GestureDetector(
-            onTap: () => setState(() => _mood = selected ? null : i),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 100,
-              margin: const EdgeInsets.only(right: 12),
-              decoration: BoxDecoration(
-                color: selected ? color.withValues(alpha: 0.1) : Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: selected ? color : const Color(0xFFE2EAF4),
-                  width: selected ? 2 : 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(_moods[i].$1, color: color, size: 22),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _moods[i].$2,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+  // ── Banner giới thiệu gói Pro ──────────────────────────────────────────────
+  Widget _buildProBanner(BuildContext context) {
+    return GestureDetector(
+      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('🎉 Gói Pro sắp ra mắt, hãy chờ đón nhé!')),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1565C0), Color(0xFF1E88E5), Color(0xFFFF8A00)],
+            stops: [0.0, 0.55, 1.0],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primary.withValues(alpha: 0.35),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
-          );
-        },
-      ),
-    );
-  }
-
-  // ── Banner AI MamGo ────────────────────────────────────────────────────────
-  Widget _buildAiBanner() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEAF3FE),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.15)),
-      ),
-      child: Row(
-        children: [
-          const AnimatedMascot(size: 62),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Trò chuyện với',
-                  style:
-                      TextStyle(color: AppTheme.textMedium, fontSize: 12),
-                ),
-                RichText(
-                  text: const TextSpan(
-                    style: TextStyle(
-                        fontSize: 19, fontWeight: FontWeight.w900),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+                border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.5), width: 1.5),
+              ),
+              child: const Icon(Icons.workspace_premium_rounded,
+                  color: Colors.white, size: 30),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
                     children: [
-                      TextSpan(
-                          text: 'AI Mam',
-                          style: TextStyle(color: AppTheme.primary)),
-                      TextSpan(
-                          text: 'Go',
-                          style: TextStyle(color: AppTheme.orange)),
+                      Text(
+                        'MamGo Pro',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      SizedBox(width: 6),
+                      Icon(Icons.auto_awesome_rounded,
+                          color: Color(0xFFFFE082), size: 16),
                     ],
                   ),
-                ),
-                const SizedBox(height: 3),
-                const Text(
-                  'Gợi ý thực đơn theo sở thích, đảm bảo dinh dưỡng cho bạn.',
-                  style:
-                      TextStyle(color: AppTheme.textMedium, fontSize: 11.5),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          GestureDetector(
-            onTap: () => widget.onSwitchTab(3),
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-              decoration: BoxDecoration(
-                color: AppTheme.primary,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primary.withValues(alpha: 0.35),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Row(
-                children: [
-                  Text(
-                    'Chat ngay',
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Đăng ký gói Pro ngay để mở khóa phân tích dinh dưỡng '
+                    'không giới hạn, thực đơn cá nhân hóa & nhiều hơn nữa!',
                     style: TextStyle(
+                        color: Colors.white, fontSize: 11.5, height: 1.4),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
                       color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      'Nâng cấp ngay ✨',
+                      style: TextStyle(
+                        color: AppTheme.primaryDark,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  SizedBox(width: 4),
-                  Icon(Icons.chevron_right_rounded,
-                      color: Colors.white, size: 18),
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -703,7 +650,6 @@ class _HomeTabState extends State<_HomeTab> {
     final hour = DateTime.now().hour;
     final mealType =
         hour < 10 ? 'breakfast' : hour < 15 ? 'lunch' : 'dinner';
-    final moodTags = _mood != null ? _moods[_mood!].$3 : const <String>[];
 
     List<Food> list = FoodsData.all
         .where((f) => f.mealType == mealType || f.mealType == 'any')
@@ -711,9 +657,6 @@ class _HomeTabState extends State<_HomeTab> {
 
     int score(Food f) {
       int s = 0;
-      for (final t in moodTags) {
-        if (f.tags.contains(t)) s += 5;
-      }
       if (pref != null) {
         for (final t in pref.tastePreferences) {
           if (f.tags.contains(t)) s += 2;

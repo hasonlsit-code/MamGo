@@ -4,13 +4,10 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:mamgo/data/models/user_preference.dart';
 
 class GeminiService {
-  // Key dùng chung cho chatbot và phân tích bữa ăn (aistudio.google.com/apikey).
-  // Truyền qua --dart-define=GEMINI_API_KEY=... hoặc
-  // --dart-define-from-file=env.json (xem env.json.example). KHÔNG hardcode key ở đây.
+
   static const apiKey = String.fromEnvironment('GEMINI_API_KEY');
   static const _apiKey = apiKey;
-  // Dùng chung 1 model cho chat và phân tích ảnh để gộp chung vào 1 quota bucket
-  // của API key (mỗi model free-tier có quota riêng biệt).
+
   static const modelName = 'gemini-2.5-flash';
   static const _modelName = modelName;
 

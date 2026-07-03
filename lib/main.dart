@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
 import 'package:mamgo/presentation/viewmodels/auth_provider.dart';
+import 'package:mamgo/presentation/viewmodels/bot_settings_provider.dart';
 import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';
 import 'package:mamgo/presentation/pages/home_screen.dart';
 import 'package:mamgo/presentation/pages/splash_screen.dart';
@@ -38,6 +39,7 @@ class MamGoApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => BotSettingsProvider()),
         ChangeNotifierProvider(create: (_) => UserPreferenceProvider()),
       ],
       child: MaterialApp(

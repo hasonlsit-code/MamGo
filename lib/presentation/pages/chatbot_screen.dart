@@ -5,13 +5,14 @@ import 'package:mamgo/data/models/food.dart';
 import 'package:mamgo/data/models/message.dart';
 import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';
 import 'package:mamgo/presentation/pages/food_detail_screen.dart';
-import 'package:mamgo/data/datasources/chatbot_service.dart';
 import 'package:mamgo/data/datasources/gemini_service.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
 import 'package:mamgo/presentation/widgets/chat_bubble.dart';
 
 class ChatbotScreen extends StatefulWidget {
-  const ChatbotScreen({super.key});
+  /// true khi mở dạng popup từ MamGo bot nổi (hiện nút đóng).
+  final bool isPopup;
+  const ChatbotScreen({super.key, this.isPopup = false});
 
   @override
   State<ChatbotScreen> createState() => _ChatbotScreenState();
@@ -22,6 +23,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final _ctrl = TextEditingController();
   final _scroll = ScrollController();
   bool _typing = false;
+  // Chưa thu thập trạng thái của người dùng → hỏi tâm trạng trước
+  bool _moodCollected = false;
 
   static const _quickActions = [
     ('🌅 Ăn sáng', 'Gợi ý bữa sáng cho mình'),
@@ -30,6 +33,58 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     ('🌶️ Món cay', 'Gợi ý món cay ngon'),
     ('🥗 Nhẹ nhàng', 'Gợi ý món nhẹ ít calo'),
     ('🎲 Bất ngờ!', 'Gợi ý ngẫu nhiên'),
+  ];
+
+  // Trạng thái → (nhãn chip, tag ưu tiên, tag nên tránh, lời đáp thân thiện)
+  static const _moodOptions = [
+    (
+      '😴 Mệt mỏi',
+      ['soup', 'warm', 'light'],
+      ['spicy', 'rich', 'crispy'],
+      'Mình hiểu rồi 🥺 Khi mệt mỏi bạn nên tránh đồ cay nóng, nhiều dầu mỡ nha. '
+          'Đây là các món thanh nhẹ, dễ tiêu giúp bạn nạp lại năng lượng nè 💪\n\n'
+          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!'
+    ),
+    (
+      '😊 Vui vẻ',
+      <String>[],
+      <String>[],
+      'Yeah, tâm trạng tốt thì ăn gì cũng ngon! 🎉 '
+          'Đây là những món mình chọn riêng để bữa ăn của bạn thêm trọn vẹn nè 😋\n\n'
+          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!'
+    ),
+    (
+      '😰 Căng thẳng',
+      ['light', 'fresh', 'soup'],
+      ['spicy', 'crispy'],
+      'Hít thở sâu nào bạn ơi 🌿 Lúc căng thẳng nên ăn món thanh đạm, dễ chịu — '
+          'tránh đồ cay và chiên rán nha. Thử mấy món này cho nhẹ bụng nè 💙\n\n'
+          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!'
+    ),
+    (
+      '💼 Bận rộn',
+      ['quick'],
+      <String>[],
+      'Bận rộn thì để mình lo! ⚡ Đây là các món nhanh gọn, dễ làm '
+          'mà vẫn đủ chất cho bạn nè 🍱\n\n'
+          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!'
+    ),
+    (
+      '🥗 Muốn healthy',
+      ['healthy', 'fresh', 'light'],
+      ['rich', 'crispy'],
+      'Quá chuẩn luôn! 🥗 Đây là những món healthy ít calo, tươi xanh '
+          'giúp bạn khỏe đẹp mỗi ngày nè ✨\n\n'
+          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!'
+    ),
+    (
+      '😋 Đói bụng',
+      <String>[],
+      <String>[],
+      'Đói thì phải ăn no nê liền! 😋 Đây là mấy món "chắc bụng" '
+          'mình gợi ý cho bạn nè 🍚\n\n'
+          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!'
+    ),
   ];
 
   @override
@@ -42,7 +97,57 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final pref = context.read<UserPreferenceProvider>().preference;
     GeminiService.initialize(pref);
     final name = pref?.name ?? 'bạn';
-    _addBot(ChatbotService.greet(name));
+    _addBot('Xin chào $name! 👋 Mình là MamGo bot đây!\n\n'
+        'Hôm nay bạn đang cảm thấy thế nào? Chọn nhanh bên dưới '
+        'hoặc kể cho mình nghe nhé 💙');
+  }
+
+  // ── Thu thập trạng thái & gợi ý món theo tâm trạng ──────────────────────────
+  void _selectMood(int index) {
+    final (label, prefer, avoid, reply) = _moodOptions[index];
+    _addUser(label);
+    setState(() {
+      _moodCollected = true;
+      _typing = true;
+    });
+    // Giả lập bot "đang gõ" một nhịp ngắn cho tự nhiên
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (!mounted) return;
+      setState(() => _typing = false);
+      _addBot(reply, foods: _foodsForMood(prefer, avoid, isHungry: index == 5));
+    });
+  }
+
+  List<Food> _foodsForMood(List<String> prefer, List<String> avoid,
+      {bool isHungry = false}) {
+    final pref = context.read<UserPreferenceProvider>().preference;
+    var list = FoodsData.all
+        .where((f) => !f.tags.any(avoid.contains))
+        .toList()
+      ..shuffle();
+    if (isHungry) {
+      final hearty = list.where((f) => f.calories >= 400).toList();
+      if (hearty.isNotEmpty) list = hearty;
+    }
+
+    int score(Food f) {
+      int s = 0;
+      for (final t in prefer) {
+        if (f.tags.contains(t)) s += 5;
+      }
+      if (pref != null) {
+        for (final t in pref.tastePreferences) {
+          if (f.tags.contains(t)) s += 2;
+        }
+        for (final c in pref.favoriteCuisines) {
+          if (f.cuisines.contains(c)) s += 3;
+        }
+      }
+      return s;
+    }
+
+    list.sort((a, b) => score(b).compareTo(score(a)));
+    return list.take(3).toList();
   }
 
   void _addBot(String text, {List<Food>? foods}) {
@@ -69,8 +174,19 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _ctrl.clear();
     _addUser(text);
 
+    // Tin nhắn đầu tiên = người dùng tự mô tả trạng thái của mình
+    final isMoodShare = !_moodCollected;
+    if (isMoodShare) setState(() => _moodCollected = true);
+
+    final prompt = isMoodShare
+        ? 'Người dùng vừa chia sẻ trạng thái hiện tại: "$text". '
+            'Hãy đồng cảm ngắn gọn, khuyên kiểu món nên ăn/nên tránh phù hợp '
+            'với trạng thái đó, và kết thúc bằng câu: '
+            '"Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!"'
+        : text;
+
     setState(() => _typing = true);
-    final reply = await GeminiService.chat(text);
+    final reply = await GeminiService.chat(prompt);
     if (!mounted) return;
     setState(() => _typing = false);
     _addBot(reply, foods: _matchFoods(text, reply));
@@ -202,7 +318,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('MamBo',
+                Text('MamGo bot',
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -219,13 +335,22 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             icon: const Icon(Icons.refresh, color: Colors.white),
             tooltip: 'Cuộc hội thoại mới',
             onPressed: () {
-              setState(() => _messages.clear());
+              setState(() {
+                _messages.clear();
+                _moodCollected = false;
+              });
               final pref =
                   context.read<UserPreferenceProvider>().preference;
               GeminiService.reset(pref);
               _sendGreeting();
             },
           ),
+          if (widget.isPopup)
+            IconButton(
+              icon: const Icon(Icons.close_rounded, color: Colors.white),
+              tooltip: 'Đóng',
+              onPressed: () => Navigator.of(context).pop(),
+            ),
         ],
       ),
       body: Column(
@@ -248,9 +373,49 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     },
                   ),
           ),
-          _quickActionsBar(),
+          _moodCollected ? _quickActionsBar() : _moodChipsBar(),
           _inputBar(),
         ],
+      ),
+    );
+  }
+
+  /// Chip chọn trạng thái khi mới vào chat (người dùng cũng có thể tự nhập).
+  Widget _moodChipsBar() {
+    return Container(
+      height: 46,
+      color: Colors.white,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        itemCount: _moodOptions.length,
+        itemBuilder: (_, i) {
+          return GestureDetector(
+            onTap: () => _selectMood(i),
+            child: Container(
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primary.withValues(alpha: 0.1),
+                    AppTheme.orange.withValues(alpha: 0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: AppTheme.primary.withValues(alpha: 0.35)),
+              ),
+              child: Center(
+                child: Text(_moodOptions[i].$1,
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textDark)),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
 import 'package:mamgo/presentation/viewmodels/auth_provider.dart';
+import 'package:mamgo/presentation/viewmodels/bot_settings_provider.dart';
 import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';
 import 'package:mamgo/presentation/pages/login_screen.dart';
 import 'package:mamgo/presentation/pages/notification_settings_screen.dart';
@@ -206,6 +207,59 @@ class ProfileScreen extends StatelessWidget {
                         color: AppTheme.textMedium),
                   ],
                 ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            // ── Bật/tắt MamGo bot ─────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2EAF4)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppTheme.chipBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.smart_toy_rounded,
+                        color: AppTheme.primary, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'MamGo bot',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textDark,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Hiện trợ lý nổi trên mọi màn hình',
+                          style: TextStyle(
+                              fontSize: 12, color: AppTheme.textMedium),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Consumer<BotSettingsProvider>(
+                    builder: (_, bot, _) => Switch(
+                      value: bot.enabled,
+                      onChanged: bot.setEnabled,
+                      activeThumbColor: AppTheme.primary,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 24),
