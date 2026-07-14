@@ -44,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen>
       return;
     }
     final prov = context.read<UserPreferenceProvider>();
-    await prov.load();
+    await prov.load(auth.user?.email ?? '');
     if (!mounted) return;
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (_) =>

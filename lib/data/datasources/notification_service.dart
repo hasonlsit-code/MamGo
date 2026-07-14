@@ -41,6 +41,7 @@ class NotificationService {
     required String mealLabel,
     required int hour,
     required int minute,
+    String payload = 'chatbot',
   }) async {
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
@@ -63,12 +64,16 @@ class NotificationService {
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
-      payload: 'chatbot',
+      payload: payload,
     );
   }
 
   /// Thông báo chúc buổi sáng hằng ngày (id 4)
-  Future<void> scheduleMorningGreeting({int hour = 6, int minute = 30}) async {
+  Future<void> scheduleMorningGreeting({
+    int hour = 6,
+    int minute = 30,
+    String payload = 'morning_greeting',
+  }) async {
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
         _channelId,
@@ -90,7 +95,7 @@ class NotificationService {
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
-      payload: 'chatbot',
+      payload: payload,
     );
   }
 

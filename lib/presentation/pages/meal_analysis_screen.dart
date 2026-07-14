@@ -1,12 +1,12 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
 import 'package:mamgo/data/datasources/meal_analysis_service.dart';
+import 'package:mamgo/data/datasources/meal_log_service.dart';
 import 'package:mamgo/data/models/meal_analysis.dart';
+import 'package:mamgo/data/models/meal_log_entry.dart';
+import 'package:mamgo/presentation/pages/meal_diary_screen.dart';
 import 'package:mamgo/presentation/widgets/animated_mascot.dart';
 
 /// Màn "Gợi ý": chụp ảnh bữa ăn để AI ước tính calo và dinh dưỡng.
@@ -85,16 +85,21 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
   Future<void> _saveMeal() async {
     final a = _analysis;
     if (a == null) return;
-    final p = await SharedPreferences.getInstance();
-    final raw = p.getString('saved_meals');
-    final list = raw == null ? <dynamic>[] : (jsonDecode(raw) as List);
-    list.add({
-      'time': DateTime.now().toIso8601String(),
-      'total_kcal': a.totalKcal,
-      'items': a.items.map((i) => i.name).toList(),
-    });
-    await p.setString('saved_meals', jsonEncode(list));
-    _showMessage('✅ Đã lưu bữa ăn ${a.totalKcal} kcal!');
+    await MealLogService.add(MealLogEntry(
+      time: DateTime.now(),
+      totalKcal: a.totalKcal,
+      items: a.items.map((i) => i.name).toList(),
+    ));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('✅ Đã lưu bữa ăn ${a.totalKcal} kcal!'),
+      action: SnackBarAction(
+        label: 'Xem nhật ký',
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const MealDiaryScreen()),
+        ),
+      ),
+    ));
   }
 
   void _showMessage(String msg) {
@@ -255,27 +260,62 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
   }
 
   Widget _buildHeader() {
-    return Column(
+    return Row(
       children: [
-        RichText(
-          text: const TextSpan(
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+        const SizedBox(width: 44),
+        Expanded(
+          child: Column(
             children: [
-              TextSpan(
-                  text: 'Phân tích ',
-                  style: TextStyle(color: AppTheme.primary)),
-              TextSpan(
-                  text: 'bữa ăn', style: TextStyle(color: AppTheme.orange)),
+              RichText(
+                text: const TextSpan(
+                  style:
+                      TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                  children: [
+                    TextSpan(
+                        text: 'Phân tích ',
+                        style: TextStyle(color: AppTheme.primary)),
+                    TextSpan(
+                        text: 'bữa ăn',
+                        style: TextStyle(color: AppTheme.orange)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Chụp ảnh món ăn để AI ước tính calo và dinh dưỡng',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppTheme.textMedium, fontSize: 13),
+              ),
             ],
           ),
         ),
-        const SizedBox(height: 4),
-        const Text(
-          'Chụp ảnh món ăn để AI ước tính calo và dinh dưỡng',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: AppTheme.textMedium, fontSize: 13),
-        ),
+        _buildDiaryButton(),
       ],
+    );
+  }
+
+  Widget _buildDiaryButton() {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const MealDiaryScreen()),
+      ),
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Icon(Icons.menu_book_rounded,
+            color: AppTheme.primary, size: 20),
+      ),
     );
   }
 

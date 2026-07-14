@@ -12,18 +12,25 @@ class UserPreferenceProvider extends ChangeNotifier {
   bool get isLoading => _loading;
   bool get hasPreference => _pref != null;
 
-  Future<void> load() async {
+  Future<void> load(String email) async {
     _loading = true;
     notifyListeners();
-    _pref = await _svc.load();
+    _pref = await _svc.load(email);
     _loading = false;
     notifyListeners();
   }
 
-  Future<void> save(UserPreference pref) async {
-    await _svc.save(pref);
+  Future<void> save(UserPreference pref, String email) async {
+    await _svc.save(pref, email);
     _pref = pref;
     await _syncNotifications();
+    notifyListeners();
+  }
+
+  Future<void> clear() async {
+    await NotificationService().cancelAll();
+    _pref = null;
+    _loading = true;
     notifyListeners();
   }
 
@@ -43,6 +50,7 @@ class UserPreferenceProvider extends ChangeNotifier {
         mealLabel: 'bữa sáng',
         hour: int.parse(parts[0]),
         minute: int.parse(parts[1]),
+        payload: 'meal_breakfast',
       );
     }
     if (p.lunchReminder) {
@@ -52,6 +60,7 @@ class UserPreferenceProvider extends ChangeNotifier {
         mealLabel: 'bữa trưa',
         hour: int.parse(parts[0]),
         minute: int.parse(parts[1]),
+        payload: 'meal_lunch',
       );
     }
     if (p.dinnerReminder) {
@@ -61,6 +70,7 @@ class UserPreferenceProvider extends ChangeNotifier {
         mealLabel: 'bữa tối',
         hour: int.parse(parts[0]),
         minute: int.parse(parts[1]),
+        payload: 'meal_dinner',
       );
     }
   }

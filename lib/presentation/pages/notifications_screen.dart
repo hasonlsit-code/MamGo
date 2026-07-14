@@ -1,24 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
 import 'package:mamgo/data/datasources/notification_log_service.dart';
-import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';
 
-/// Trung tâm thông báo: xem lại các nhắc nhở đã gửi theo mốc thời gian.
-class NotificationsScreen extends StatelessWidget {
+/// Trung tâm thông báo: xem lại các thông báo THẬT đã xảy ra, đúng thời điểm
+/// theo đồng hồ máy lúc đó (không phải tính toán giả lập).
+class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  List<NotificationEntry>? _entries;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final entries = await NotificationLogService.loadAll();
+    if (!mounted) return;
+    setState(() => _entries = entries);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final pref = context.watch<UserPreferenceProvider>().preference;
-    final entries = NotificationLogService.buildTimeline(pref);
+    final entries = _entries;
     final now = DateTime.now();
 
     // Gom nhóm theo ngày
     final groups = <String, List<NotificationEntry>>{};
-    for (final e in entries) {
-      final key = _dayLabel(e.time, now);
-      groups.putIfAbsent(key, () => []).add(e);
+    if (entries != null) {
+      for (final e in entries) {
+        final key = _dayLabel(e.time, now);
+        groups.putIfAbsent(key, () => []).add(e);
+      }
     }
 
     return Scaffold(
@@ -40,18 +59,26 @@ class NotificationsScreen extends StatelessWidget {
               fontSize: 18),
         ),
       ),
-      body: entries.isEmpty
-          ? _emptyState()
-          : ListView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              children: groups.entries
-                  .expand((g) => [
-                        _dayHeader(g.key),
-                        ...g.value.map(_entryTile),
-                      ])
-                  .toList(),
-            ),
+      body: entries == null
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.primary))
+          : entries.isEmpty
+              ? _emptyState()
+              : RefreshIndicator(
+                  onRefresh: _load,
+                  color: AppTheme.primary,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics()),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                    children: groups.entries
+                        .expand((g) => [
+                              _dayHeader(g.key),
+                              ...g.value.map(_entryTile),
+                            ])
+                        .toList(),
+                  ),
+                ),
     );
   }
 
@@ -81,6 +108,7 @@ class NotificationsScreen extends StatelessWidget {
   Widget _entryTile(NotificationEntry e) {
     final hh = e.time.hour.toString().padLeft(2, '0');
     final mm = e.time.minute.toString().padLeft(2, '0');
+    final ss = e.time.second.toString().padLeft(2, '0');
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -128,9 +156,11 @@ class NotificationsScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '$hh:$mm',
+                      '$hh:$mm:$ss',
                       style: const TextStyle(
-                          fontSize: 12, color: AppTheme.textMedium),
+                          fontSize: 11.5,
+                          color: AppTheme.textMedium,
+                          fontFamily: 'monospace'),
                     ),
                   ],
                 ),
@@ -151,20 +181,25 @@ class NotificationsScreen extends StatelessWidget {
   }
 
   Widget _emptyState() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+    return Center(
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics()),
+        shrinkWrap: true,
+        children: const [
+          SizedBox(height: 120),
           Icon(Icons.notifications_off_outlined,
               size: 56, color: AppTheme.textMedium),
           SizedBox(height: 12),
           Text(
             'Chưa có thông báo nào',
+            textAlign: TextAlign.center,
             style: TextStyle(color: AppTheme.textMedium, fontSize: 14),
           ),
           SizedBox(height: 4),
           Text(
             'Bật nhắc nhở trong Hồ sơ để nhận thông báo nhé!',
+            textAlign: TextAlign.center,
             style: TextStyle(color: AppTheme.textMedium, fontSize: 12),
           ),
         ],

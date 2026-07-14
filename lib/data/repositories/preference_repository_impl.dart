@@ -6,11 +6,11 @@ class PreferenceRepositoryImpl implements IPreferenceRepository {
   final _service = PreferenceService();
 
   @override
-  Future<UserPreference?> load() => _service.load();
+  Future<UserPreference?> load(String email) => _service.load(email);
 
   @override
-  Future<void> save(UserPreference preference) => _service.save(preference);
+  Future<void> save(UserPreference preference, String email) => _service.save(preference, email);
 
   @override
-  Future<bool> isOnboardingDone() => _service.isOnboardingDone();
+  Future<bool> isOnboardingDone(String email) => _service.isOnboardingDone(email);
 }

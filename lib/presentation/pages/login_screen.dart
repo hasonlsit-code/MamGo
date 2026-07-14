@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
 import 'package:mamgo/presentation/viewmodels/auth_provider.dart';
 import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';
@@ -21,12 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscure = true;
   bool _remember = true;
   bool _loading = false;
-
-  // Ảnh món ăn thật trang trí hai bên logo
-  static const _leftDishUrl =
-      'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=400&fit=crop&q=80';
-  static const _rightDishUrl =
-      'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=400&fit=crop&q=80';
 
   @override
   void initState() {
@@ -70,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     final prefProv = context.read<UserPreferenceProvider>();
-    await prefProv.load();
+    await prefProv.load(email);
     if (!mounted) return;
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (_) => prefProv.hasPreference
@@ -83,126 +76,125 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            children: [
-              _buildHero(),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildLoginCard(),
+      body: Stack(
+        children: [
+          // Background Color Blobs (Adds color/vibrancy)
+          Positioned(
+            top: -80,
+            left: -80,
+            child: Container(
+              width: 280,
+              height: 280,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.primary.withValues(alpha: 0.16),
               ),
-              const SizedBox(height: 20),
-              _buildTermsFooter(),
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
-        ),
+          Positioned(
+            bottom: -60,
+            right: -60,
+            child: Container(
+              width: 320,
+              height: 320,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.orange.withValues(alpha: 0.14),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 280,
+            right: -100,
+            child: Container(
+              width: 260,
+              height: 260,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.secondary.withValues(alpha: 0.12),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  _buildHero(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _buildLoginCard(),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildTermsFooter(),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  // ── Khu vực logo + tagline + ảnh món ăn thật ──────────────────────────────
+  // ── Khu vực logo + tagline ────────────────────────────────────────────────
   Widget _buildHero() {
     return SizedBox(
-      height: 270,
-      child: Stack(
-        clipBehavior: Clip.none,
+      height: 230,
+      child: Column(
         children: [
-          Positioned(
-            left: -55,
-            top: 110,
-            child: _dishPhoto(_leftDishUrl, 130),
+          const SizedBox(height: 24),
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primary.withValues(alpha: 0.18),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: ClipOval(
+              child: Image.asset(
+                'logo.png',
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const Center(
+                    child: Text('🍽️', style: TextStyle(fontSize: 48))),
+              ),
+            ),
           ),
-          Positioned(
-            right: -55,
-            top: 130,
-            child: _dishPhoto(_rightDishUrl, 120),
+          const SizedBox(height: 12),
+          RichText(
+            text: const TextSpan(
+              style: TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
+              ),
+              children: [
+                TextSpan(
+                    text: 'Mam',
+                    style: TextStyle(color: AppTheme.primary)),
+                TextSpan(
+                    text: 'Go',
+                    style: TextStyle(color: AppTheme.orange)),
+              ],
+            ),
           ),
-          Column(
-            children: [
-              const SizedBox(height: 30),
-              Container(
-                width: 110,
-                height: 110,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primary.withValues(alpha: 0.18),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: ClipOval(
-                  child: Image.asset(
-                    'logo.png',
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => const Center(
-                        child: Text('🍽️', style: TextStyle(fontSize: 52))),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              RichText(
-                text: const TextSpan(
-                  style: TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.5,
-                  ),
-                  children: [
-                    TextSpan(
-                        text: 'Mam',
-                        style: TextStyle(color: AppTheme.primary)),
-                    TextSpan(
-                        text: 'Go',
-                        style: TextStyle(color: AppTheme.orange)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Ăn đúng giờ. Chọn món đúng tâm trạng.',
-                style: TextStyle(
-                  color: AppTheme.textMedium,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+          const SizedBox(height: 4),
+          const Text(
+            'Ăn đúng giờ. Chọn món đúng tâm trạng.',
+            style: TextStyle(
+              color: AppTheme.textMedium,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _dishPhoto(String url, double size) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 4),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: url,
-          fit: BoxFit.cover,
-          placeholder: (_, _) => Container(color: const Color(0xFFEFF5FD)),
-          errorWidget: (_, _, _) =>
-              Container(color: const Color(0xFFEFF5FD)),
-        ),
       ),
     );
   }
@@ -212,8 +204,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withValues(alpha: 0.92), // Glassmorphism backdrop
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.white, width: 2), // Glassmorphism border
         boxShadow: [
           BoxShadow(
             color: AppTheme.primary.withValues(alpha: 0.08),
@@ -231,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
             decoration: const InputDecoration(
               hintText: 'Email',
               prefixIcon:
-                  Icon(Icons.mail_outline_rounded, color: AppTheme.textMedium),
+                  Icon(Icons.mail_outline_rounded, color: AppTheme.primary),
             ),
           ),
           const SizedBox(height: 14),
@@ -242,13 +235,13 @@ class _LoginScreenState extends State<LoginScreen> {
             decoration: InputDecoration(
               hintText: 'Mật khẩu',
               prefixIcon: const Icon(Icons.lock_outline_rounded,
-                  color: AppTheme.textMedium),
+                  color: AppTheme.primary),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscure
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
-                  color: AppTheme.textMedium,
+                  color: AppTheme.primary,
                 ),
                 onPressed: () => setState(() => _obscure = !_obscure),
               ),

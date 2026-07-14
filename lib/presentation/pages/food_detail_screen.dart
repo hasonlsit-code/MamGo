@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:mamgo/data/datasources/recipes_data.dart';
 import 'package:mamgo/data/models/food.dart';
+import 'package:mamgo/data/models/recipe.dart';
 import 'package:mamgo/data/datasources/gemini_service.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
+import 'package:mamgo/presentation/pages/recipe_detail_screen.dart';
 import 'package:mamgo/presentation/widgets/animated_mascot.dart';
 
 class FoodDetailScreen extends StatefulWidget {
@@ -41,15 +44,24 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
       _loadingRecipe = true;
       _recipeRequested = true;
     });
-    final recipe = await GeminiService.chat(
-      'Hãy cho mình công thức nấu ${widget.food.name} với danh sách nguyên liệu đầy đủ và từng bước thực hiện chi tiết nhé!',
-    );
+    final recipe = await GeminiService.getRecipe(widget.food.name);
     if (mounted) {
       setState(() {
         _recipe = recipe;
         _loadingRecipe = false;
       });
     }
+  }
+
+  /// Tìm công thức đã có sẵn trong Cẩm nang khớp với món này, để nối thẳng
+  /// đến màn công thức thay vì gọi AI sinh lại từ đầu.
+  Recipe? _matchingLibraryRecipe() {
+    final foodName = widget.food.name.toLowerCase().trim();
+    for (final r in RecipesData.all) {
+      if (r.id == widget.food.id) return r;
+      if (r.name.toLowerCase().contains(foodName)) return r;
+    }
+    return null;
   }
 
   @override
@@ -378,7 +390,88 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
     );
   }
 
+  /// Món đã có công thức chi tiết sẵn trong Cẩm nang → nối thẳng đến đó,
+  /// không cần gọi AI sinh lại.
+  Widget _libraryRecipeCard(Recipe recipe) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => RecipeDetailScreen(recipe: recipe)),
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppTheme.primaryDark, AppTheme.primary],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primary.withValues(alpha: 0.4),
+              blurRadius: 18,
+              offset: const Offset(0, 7),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Center(
+                child: Text(recipe.emoji,
+                    style: const TextStyle(fontSize: 26)),
+              ),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Xem công thức trong Cẩm nang',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 3),
+                  Text(
+                    'Nguyên liệu & các bước nấu chi tiết đầy đủ',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(9),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.22),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.arrow_forward_rounded,
+                  color: Colors.white, size: 18),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _recipeSection() {
+    final libraryRecipe = _matchingLibraryRecipe();
+    if (libraryRecipe != null) {
+      return _libraryRecipeCard(libraryRecipe);
+    }
+
     if (!_recipeRequested) {
       return GestureDetector(
         onTap: _loadRecipe,

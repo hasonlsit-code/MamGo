@@ -70,7 +70,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
     final prefProv = context.read<UserPreferenceProvider>();
-    await prefProv.load();
+    await prefProv.load(email);
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(

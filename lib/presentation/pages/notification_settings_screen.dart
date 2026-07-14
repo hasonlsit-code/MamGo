@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:mamgo/data/datasources/notification_log_service.dart';
 import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';
+import 'package:mamgo/presentation/viewmodels/auth_provider.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
@@ -63,6 +65,7 @@ class _NotificationSettingsScreenState
     final prov = context.read<UserPreferenceProvider>();
     final p = prov.preference;
     if (p == null) return;
+    final email = context.read<AuthProvider>().user?.email ?? '';
     await prov.save(p.copyWith(
       breakfastReminder: _breakfastOn,
       lunchReminder: _lunchOn,
@@ -70,7 +73,10 @@ class _NotificationSettingsScreenState
       breakfastTime: _fmtTime(_breakfastTime),
       lunchTime: _fmtTime(_lunchTime),
       dinnerTime: _fmtTime(_dinnerTime),
-    ));
+    ), email);
+
+    await _logScheduleConfirmations();
+
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -79,6 +85,32 @@ class _NotificationSettingsScreenState
         duration: Duration(seconds: 2),
       ),
     );
+  }
+
+  /// Ghi log "đã đặt lịch" cho mỗi bữa vừa bật nhắc, kèm đếm ngược còn bao
+  /// lâu nữa sẽ đến bữa — tính đúng tại thời điểm lưu (đồng hồ máy thật).
+  Future<void> _logScheduleConfirmations() async {
+    final now = DateTime.now();
+
+    Future<void> logOne(bool on, TimeOfDay t, String label, String emoji) async {
+      if (!on) return;
+      var target = DateTime(now.year, now.month, now.day, t.hour, t.minute);
+      if (target.isBefore(now)) target = target.add(const Duration(days: 1));
+      final remaining = target.difference(now);
+      final hh = remaining.inHours;
+      final mm = remaining.inMinutes % 60;
+      final countdown = hh > 0 ? '$hh giờ $mm phút' : '$mm phút';
+      await NotificationLogService.log(
+        emoji: emoji,
+        title: 'Đã đặt lịch nhắc $label',
+        body: 'Lúc ${_fmtTime(t)} — còn $countdown nữa sẽ đến $label',
+        time: now,
+      );
+    }
+
+    await logOne(_breakfastOn, _breakfastTime, 'bữa sáng', '🌅');
+    await logOne(_lunchOn, _lunchTime, 'bữa trưa', '☀️');
+    await logOne(_dinnerOn, _dinnerTime, 'bữa tối', '🌙');
   }
 
   @override

@@ -12,7 +12,15 @@ import 'package:mamgo/presentation/widgets/chat_bubble.dart';
 class ChatbotScreen extends StatefulWidget {
   /// true khi mở dạng popup từ MamGo bot nổi (hiện nút đóng).
   final bool isPopup;
-  const ChatbotScreen({super.key, this.isPopup = false});
+  final String? initialPayload;
+  final VoidCallback? onPayloadConsumed;
+
+  const ChatbotScreen({
+    super.key,
+    this.isPopup = false,
+    this.initialPayload,
+    this.onPayloadConsumed,
+  });
 
   @override
   State<ChatbotScreen> createState() => _ChatbotScreenState();
@@ -93,13 +101,86 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _sendGreeting());
   }
 
+  @override
+  void didUpdateWidget(covariant ChatbotScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialPayload != oldWidget.initialPayload && widget.initialPayload != null) {
+      _messages.clear();
+      _sendGreeting();
+    }
+  }
+
+  String _getTimeBasedGreeting(String name) {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 11) {
+      return 'Chào buổi sáng $name! 🌅 Chúc bạn một ngày mới đầy năng lượng. Bạn đã ăn sáng chưa? Nhớ nạp đủ năng lượng cho ngày mới nhé! 🍀\n\nHôm nay bạn cảm thấy thế nào? Hãy chia sẻ với mình hoặc chọn nhanh tâm trạng phía dưới nha!';
+    } else if (hour >= 11 && hour < 14) {
+      return 'Chào buổi trưa $name! ☀️ Đã đến giờ nghỉ ngơi và ăn trưa rồi. Hôm nay bạn muốn dùng món gì để nạp lại năng lượng? 🍱\n\nHôm nay bạn cảm thấy thế nào? Hãy chia sẻ với mình hoặc chọn nhanh tâm trạng phía dưới nha!';
+    } else if (hour >= 14 && hour < 18) {
+      return 'Chào buổi chiều $name! 🍃 Bạn đã có một ngày làm việc hiệu quả chứ? Hãy uống một chút nước hoặc ăn nhẹ để giữ tỉnh táo nhé! 🍉\n\nHôm nay bạn cảm thấy thế nào? Hãy chia sẻ với mình hoặc chọn nhanh tâm trạng phía dưới nha!';
+    } else if (hour >= 18 && hour < 22) {
+      return 'Chào buổi tối $name! 🌙 Đã đến giờ ăn tối rồi. Bạn muốn mình gợi ý món ăn tối ngon miệng và ấm cúng cho gia đình không? 🍲\n\nHôm nay bạn cảm thấy thế nào? Hãy chia sẻ với mình hoặc chọn nhanh tâm trạng phía dưới nha!';
+    } else {
+      return 'Chào bạn $name! 🌌 Đã khá muộn rồi, bạn nên nghỉ ngơi sớm nhé. Nếu có đói bụng thì chỉ nên ăn nhẹ món dễ tiêu thôi nha! 💤\n\nHôm nay bạn cảm thấy thế nào? Hãy chia sẻ với mình hoặc chọn nhanh tâm trạng phía dưới nha!';
+    }
+  }
+
+  List<Food> _foodsForMealType(String type) {
+    final pref = context.read<UserPreferenceProvider>().preference;
+    var list = FoodsData.all
+        .where((f) => f.mealType.toLowerCase() == type.toLowerCase() || f.mealType.toLowerCase() == 'any')
+        .toList()
+      ..shuffle();
+    if (pref != null) {
+      int score(Food f) {
+        int s = 0;
+        for (final t in pref.tastePreferences) {
+          if (f.tags.contains(t)) s += 2;
+        }
+        for (final c in pref.favoriteCuisines) {
+          if (f.cuisines.contains(c)) s += 3;
+        }
+        return s;
+      }
+      list.sort((a, b) => score(b).compareTo(score(a)));
+    }
+    return list.take(3).toList();
+  }
+
   void _sendGreeting() {
     final pref = context.read<UserPreferenceProvider>().preference;
     GeminiService.initialize(pref);
     final name = pref?.name ?? 'bạn';
-    _addBot('Xin chào $name! 👋 Mình là MamGo bot đây!\n\n'
-        'Hôm nay bạn đang cảm thấy thế nào? Chọn nhanh bên dưới '
-        'hoặc kể cho mình nghe nhé 💙');
+    
+    String message;
+    List<Food>? suggestedFoods;
+    
+    if (widget.initialPayload != null) {
+      switch (widget.initialPayload) {
+        case 'morning_greeting':
+          message = 'Chào buổi sáng $name! ☀️ Chúc bạn một ngày mới tốt lành! Nhớ ăn uống đầy đủ để khỏe mạnh nhé 🍀';
+          break;
+        case 'meal_breakfast':
+          message = '🍽️ Đến giờ ăn sáng rồi $name ơi!\n\nBữa sáng vô cùng quan trọng để bắt đầu một ngày mới. MămGo gợi ý cho bạn một vài món ăn sáng bổ dưỡng và ngon miệng bên dưới nè, thử xem sao nhé! 🍳';
+          suggestedFoods = _foodsForMealType('breakfast');
+          break;
+        case 'meal_lunch':
+          message = '🍽️ Đến giờ ăn trưa rồi $name ơi!\n\nHãy tạm gác công việc để nạp năng lượng nhé. Mình có sẵn các gợi ý món ăn trưa thơm ngon cho bạn nạp năng lượng đây! 😋';
+          suggestedFoods = _foodsForMealType('lunch');
+          break;
+        case 'meal_dinner':
+          message = '🍽️ Đến giờ ăn tối rồi $name ơi!\n\nSau một ngày dài bận rộn, hãy thưởng thức bữa tối thật ngon miệng để hồi sức nhé. Hôm nay bạn thích món ăn nào dưới đây? 🍲';
+          suggestedFoods = _foodsForMealType('dinner');
+          break;
+        default:
+          message = _getTimeBasedGreeting(name);
+      }
+      widget.onPayloadConsumed?.call();
+    } else {
+      message = _getTimeBasedGreeting(name);
+    }
+    
+    _addBot(message, foods: suggestedFoods);
   }
 
   // ── Thu thập trạng thái & gợi ý món theo tâm trạng ──────────────────────────
@@ -180,9 +261,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
     final prompt = isMoodShare
         ? 'Người dùng vừa chia sẻ trạng thái hiện tại: "$text". '
-            'Hãy đồng cảm ngắn gọn, khuyên kiểu món nên ăn/nên tránh phù hợp '
-            'với trạng thái đó, và kết thúc bằng câu: '
-            '"Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!"'
+            'Hãy đồng cảm ngắn gọn, khuyên kiểu món nên ăn/nên tránh phù hợp với trạng thái đó, '
+            'gợi ý một món ăn cụ thể phù hợp nhất và hướng dẫn nấu chi tiết các bước (gồm nguyên liệu và các bước thực hiện).'
         : text;
 
     setState(() => _typing = true);

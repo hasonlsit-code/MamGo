@@ -75,7 +75,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           .map((c) => c.split(' ').first)
           .toList(),
     );
-    await context.read<UserPreferenceProvider>().save(pref);
+    final email = context.read<AuthProvider>().user?.email ?? '';
+    await context.read<UserPreferenceProvider>().save(pref, email);
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const HomeScreen()));
