@@ -4,7 +4,7 @@ import 'package:mamgo/domain/entities/food_entity.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mamgo/data/datasources/foods_data.dart';
-import 'package:mamgo/data/datasources/notification_log_service.dart';
+import 'package:mamgo/data/datasources/notification_log_datasource.dart';
 import 'package:mamgo/presentation/viewmodels/auth_provider.dart';
 import 'package:mamgo/presentation/viewmodels/bot_settings_provider.dart';
 import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';

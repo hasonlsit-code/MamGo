@@ -1,26 +1,16 @@
-import 'package:mamgo/domain/entities/user_account_entity.dart';
 import 'package:mamgo/domain/interface_repositories/iauth_repository.dart';
-import 'package:mamgo/data/datasources/auth_service.dart';
-import 'package:mamgo/data/models/user_account.dart';
+import 'package:mamgo/domain/service/auth_service.dart';
 
 class AuthRepositoryImpl implements IAuthRepository {
   final _service = AuthService();
 
   @override
-  Future<UserAccount?> login(String email, String password) =>
+  Future<LoginResult> login(String email, String password) =>
       _service.login(email, password);
 
   @override
-  Future<String?> register(UserAccount account) {
-    final model = account is UserAccountModel
-        ? account
-        : UserAccountModel(
-            name: account.name,
-            email: account.email,
-            password: account.password,
-          );
-    return _service.register(model);
-  }
+  Future<RegisterResult> register(String name, String email, String password) =>
+      _service.register(name, email, password);
 
   @override
   Future<UserAccount?> currentUser() => _service.currentUser();

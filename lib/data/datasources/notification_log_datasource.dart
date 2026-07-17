@@ -1,36 +1,6 @@
 import 'dart:convert';
-
 import 'package:shared_preferences/shared_preferences.dart';
-
-/// Một thông báo THẬT đã xảy ra, ghi đúng thời điểm theo đồng hồ máy lúc đó.
-class NotificationEntry {
-  final String emoji;
-  final String title;
-  final String body;
-  final DateTime time;
-
-  const NotificationEntry({
-    required this.emoji,
-    required this.title,
-    required this.body,
-    required this.time,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'emoji': emoji,
-        'title': title,
-        'body': body,
-        'time': time.toIso8601String(),
-      };
-
-  factory NotificationEntry.fromJson(Map<String, dynamic> json) =>
-      NotificationEntry(
-        emoji: json['emoji'] ?? '🔔',
-        title: json['title'] ?? '',
-        body: json['body'] ?? '',
-        time: DateTime.tryParse(json['time'] ?? '') ?? DateTime.now(),
-      );
-}
+import 'package:mamgo/data/models/notification_entry.dart';
 
 /// Nhật ký thông báo THẬT (không phải tính toán giả lập): mỗi khi một thông
 /// báo thực sự xảy ra (nhắc trong app, mở từ hệ thống, hoặc xác nhận đặt lịch)
@@ -48,15 +18,20 @@ class NotificationLogService {
   }) async {
     final p = await SharedPreferences.getInstance();
     final raw = p.getString(_key);
-    final list = raw == null || raw.isEmpty ? <dynamic>[] : jsonDecode(raw) as List;
-    list.add(NotificationEntry(
-      emoji: emoji,
-      title: title,
-      body: body,
-      time: time ?? DateTime.now(),
-    ).toJson());
-    final trimmed =
-        list.length > _maxEntries ? list.sublist(list.length - _maxEntries) : list;
+    final list = raw == null || raw.isEmpty
+        ? <dynamic>[]
+        : jsonDecode(raw) as List;
+    list.add(
+      NotificationEntry(
+        emoji: emoji,
+        title: title,
+        body: body,
+        time: time ?? DateTime.now(),
+      ).toJson(),
+    );
+    final trimmed = list.length > _maxEntries
+        ? list.sublist(list.length - _maxEntries)
+        : list;
     await p.setString(_key, jsonEncode(trimmed));
   }
 

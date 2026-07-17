@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:mamgo/data/datasources/notification_log_service.dart';
+import 'package:mamgo/data/datasources/notification_log_datasource.dart';
 import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';
 import 'package:mamgo/presentation/viewmodels/auth_provider.dart';
 import 'package:mamgo/core/constants/app_theme.dart';

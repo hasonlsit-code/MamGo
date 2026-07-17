@@ -1,10 +1,10 @@
 import 'package:mamgo/domain/entities/user_preference_entity.dart';
 import 'package:mamgo/domain/interface_repositories/ipreference_repository.dart';
-import 'package:mamgo/data/datasources/preference_service.dart';
+import 'package:mamgo/data/datasources/preference_datasource.dart';
 import 'package:mamgo/data/models/user_preference.dart';
 
 class PreferenceRepositoryImpl implements IPreferenceRepository {
-  final _service = PreferenceService();
+  final _service = PreferenceDatasource();
 
   @override
   Future<UserPreference?> load(String email) => _service.load(email);

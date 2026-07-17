@@ -1,7 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mamgo/data/models/user_preference.dart';
 
-class PreferenceService {
+class PreferenceDatasource {
   static const _onboardingKey = 'onboarding_done';
 
   String _getKey(String email, String key) {
