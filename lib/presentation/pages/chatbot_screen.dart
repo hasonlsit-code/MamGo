@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:mamgo/domain/entities/food_entity.dart';
 import 'package:provider/provider.dart';
 import 'package:mamgo/data/datasources/foods_data.dart';
-import 'package:mamgo/data/models/food.dart';
 import 'package:mamgo/data/models/message.dart';
 import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';
 import 'package:mamgo/presentation/pages/food_detail_screen.dart';
 import 'package:mamgo/data/datasources/gemini_service.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
+import 'package:mamgo/core/utils/text_utils.dart';
 import 'package:mamgo/presentation/widgets/chat_bubble.dart';
 
 class ChatbotScreen extends StatefulWidget {
@@ -51,7 +52,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       ['spicy', 'rich', 'crispy'],
       'Mình hiểu rồi 🥺 Khi mệt mỏi bạn nên tránh đồ cay nóng, nhiều dầu mỡ nha. '
           'Đây là các món thanh nhẹ, dễ tiêu giúp bạn nạp lại năng lượng nè 💪\n\n'
-          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!'
+          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!',
     ),
     (
       '😊 Vui vẻ',
@@ -59,7 +60,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       <String>[],
       'Yeah, tâm trạng tốt thì ăn gì cũng ngon! 🎉 '
           'Đây là những món mình chọn riêng để bữa ăn của bạn thêm trọn vẹn nè 😋\n\n'
-          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!'
+          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!',
     ),
     (
       '😰 Căng thẳng',
@@ -67,7 +68,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       ['spicy', 'crispy'],
       'Hít thở sâu nào bạn ơi 🌿 Lúc căng thẳng nên ăn món thanh đạm, dễ chịu — '
           'tránh đồ cay và chiên rán nha. Thử mấy món này cho nhẹ bụng nè 💙\n\n'
-          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!'
+          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!',
     ),
     (
       '💼 Bận rộn',
@@ -75,7 +76,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       <String>[],
       'Bận rộn thì để mình lo! ⚡ Đây là các món nhanh gọn, dễ làm '
           'mà vẫn đủ chất cho bạn nè 🍱\n\n'
-          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!'
+          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!',
     ),
     (
       '🥗 Muốn healthy',
@@ -83,7 +84,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       ['rich', 'crispy'],
       'Quá chuẩn luôn! 🥗 Đây là những món healthy ít calo, tươi xanh '
           'giúp bạn khỏe đẹp mỗi ngày nè ✨\n\n'
-          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!'
+          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!',
     ),
     (
       '😋 Đói bụng',
@@ -91,7 +92,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       <String>[],
       'Đói thì phải ăn no nê liền! 😋 Đây là mấy món "chắc bụng" '
           'mình gợi ý cho bạn nè 🍚\n\n'
-          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!'
+          'Nếu cần hỗ trợ gì thêm hãy nhắn cho mình biết nhé!',
     ),
   ];
 
@@ -104,7 +105,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   void didUpdateWidget(covariant ChatbotScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.initialPayload != oldWidget.initialPayload && widget.initialPayload != null) {
+    if (widget.initialPayload != oldWidget.initialPayload &&
+        widget.initialPayload != null) {
       _messages.clear();
       _sendGreeting();
     }
@@ -127,10 +129,15 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   List<Food> _foodsForMealType(String type) {
     final pref = context.read<UserPreferenceProvider>().preference;
-    var list = FoodsData.all
-        .where((f) => f.mealType.toLowerCase() == type.toLowerCase() || f.mealType.toLowerCase() == 'any')
-        .toList()
-      ..shuffle();
+    var list =
+        FoodsData.all
+            .where(
+              (f) =>
+                  f.mealType.toLowerCase() == type.toLowerCase() ||
+                  f.mealType.toLowerCase() == 'any',
+            )
+            .toList()
+          ..shuffle();
     if (pref != null) {
       int score(Food f) {
         int s = 0;
@@ -142,6 +149,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         }
         return s;
       }
+
       list.sort((a, b) => score(b).compareTo(score(a)));
     }
     return list.take(3).toList();
@@ -151,25 +159,29 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final pref = context.read<UserPreferenceProvider>().preference;
     GeminiService.initialize(pref);
     final name = pref?.name ?? 'bạn';
-    
+
     String message;
     List<Food>? suggestedFoods;
-    
+
     if (widget.initialPayload != null) {
       switch (widget.initialPayload) {
         case 'morning_greeting':
-          message = 'Chào buổi sáng $name! ☀️ Chúc bạn một ngày mới tốt lành! Nhớ ăn uống đầy đủ để khỏe mạnh nhé 🍀';
+          message =
+              'Chào buổi sáng $name! ☀️ Chúc bạn một ngày mới tốt lành! Nhớ ăn uống đầy đủ để khỏe mạnh nhé 🍀';
           break;
         case 'meal_breakfast':
-          message = '🍽️ Đến giờ ăn sáng rồi $name ơi!\n\nBữa sáng vô cùng quan trọng để bắt đầu một ngày mới. MămGo gợi ý cho bạn một vài món ăn sáng bổ dưỡng và ngon miệng bên dưới nè, thử xem sao nhé! 🍳';
+          message =
+              '🍽️ Đến giờ ăn sáng rồi $name ơi!\n\nBữa sáng vô cùng quan trọng để bắt đầu một ngày mới. MămGo gợi ý cho bạn một vài món ăn sáng bổ dưỡng và ngon miệng bên dưới nè, thử xem sao nhé! 🍳';
           suggestedFoods = _foodsForMealType('breakfast');
           break;
         case 'meal_lunch':
-          message = '🍽️ Đến giờ ăn trưa rồi $name ơi!\n\nHãy tạm gác công việc để nạp năng lượng nhé. Mình có sẵn các gợi ý món ăn trưa thơm ngon cho bạn nạp năng lượng đây! 😋';
+          message =
+              '🍽️ Đến giờ ăn trưa rồi $name ơi!\n\nHãy tạm gác công việc để nạp năng lượng nhé. Mình có sẵn các gợi ý món ăn trưa thơm ngon cho bạn nạp năng lượng đây! 😋';
           suggestedFoods = _foodsForMealType('lunch');
           break;
         case 'meal_dinner':
-          message = '🍽️ Đến giờ ăn tối rồi $name ơi!\n\nSau một ngày dài bận rộn, hãy thưởng thức bữa tối thật ngon miệng để hồi sức nhé. Hôm nay bạn thích món ăn nào dưới đây? 🍲';
+          message =
+              '🍽️ Đến giờ ăn tối rồi $name ơi!\n\nSau một ngày dài bận rộn, hãy thưởng thức bữa tối thật ngon miệng để hồi sức nhé. Hôm nay bạn thích món ăn nào dưới đây? 🍲';
           suggestedFoods = _foodsForMealType('dinner');
           break;
         default:
@@ -179,7 +191,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     } else {
       message = _getTimeBasedGreeting(name);
     }
-    
+
     _addBot(message, foods: suggestedFoods);
   }
 
@@ -199,12 +211,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     });
   }
 
-  List<Food> _foodsForMood(List<String> prefer, List<String> avoid,
-      {bool isHungry = false}) {
+  List<Food> _foodsForMood(
+    List<String> prefer,
+    List<String> avoid, {
+    bool isHungry = false,
+  }) {
     final pref = context.read<UserPreferenceProvider>().preference;
-    var list = FoodsData.all
-        .where((f) => !f.tags.any(avoid.contains))
-        .toList()
+    var list = FoodsData.all.where((f) => !f.tags.any(avoid.contains)).toList()
       ..shuffle();
     if (isHungry) {
       final hearty = list.where((f) => f.calories >= 400).toList();
@@ -233,11 +246,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   void _addBot(String text, {List<Food>? foods}) {
     setState(() {
-      _messages.add(Message(
+      _messages.add(
+        Message(
           text: text,
           isUser: false,
           timestamp: DateTime.now(),
-          suggestedFoods: foods));
+          suggestedFoods: foods,
+        ),
+      );
     });
     _scrollDown();
   }
@@ -245,7 +261,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   void _addUser(String text) {
     setState(() {
       _messages.add(
-          Message(text: text, isUser: true, timestamp: DateTime.now()));
+        Message(text: text, isUser: true, timestamp: DateTime.now()),
+      );
     });
     _scrollDown();
   }
@@ -261,8 +278,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
     final prompt = isMoodShare
         ? 'Người dùng vừa chia sẻ trạng thái hiện tại: "$text". '
-            'Hãy đồng cảm ngắn gọn, khuyên kiểu món nên ăn/nên tránh phù hợp với trạng thái đó, '
-            'gợi ý một món ăn cụ thể phù hợp nhất và hướng dẫn nấu chi tiết các bước (gồm nguyên liệu và các bước thực hiện).'
+              'Hãy đồng cảm ngắn gọn, khuyên kiểu món nên ăn/nên tránh phù hợp với trạng thái đó, '
+              'gợi ý một món ăn cụ thể phù hợp nhất và hướng dẫn nấu chi tiết các bước (gồm nguyên liệu và các bước thực hiện).'
         : text;
 
     setState(() => _typing = true);
@@ -273,60 +290,87 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   }
 
   List<Food> _matchFoods(String userMsg, String aiReply) {
-    final q = '${userMsg.toLowerCase()} ${aiReply.toLowerCase()}';
-    final all = List<Food>.from(FoodsData.all)..shuffle();
+    final q = '${userMsg} ${aiReply}';
+    final normalizedQ = TextUtils.normalize(q);
+    final all = List<Food>.from(FoodsData.all);
 
-    // Try to find foods mentioned by name in the reply
     final mentioned = all
-        .where((f) => q.contains(f.name.toLowerCase()))
-        .take(3)
+        .where((f) => normalizedQ.contains(TextUtils.normalize(f.name)))
         .toList();
-    if (mentioned.length >= 2) return mentioned;
+    if (mentioned.isNotEmpty) {
+      return mentioned.take(3).toList();
+    }
 
-    // Mood/keyword matching
-    if (q.contains('mệt') ||
-        q.contains('stress') ||
-        q.contains('áp lực') ||
-        q.contains('buồn')) {
-      final light = all
-          .where((f) =>
-              f.tags.contains('light') ||
-              f.tags.contains('healthy') ||
-              f.tags.contains('fresh'))
+    final isSeafoodQuery =
+        normalizedQ.contains('ca') ||
+        normalizedQ.contains('fish') ||
+        normalizedQ.contains('seafood') ||
+        normalizedQ.contains('hai san') ||
+        normalizedQ.contains('tom') ||
+        normalizedQ.contains('cua');
+
+    if (isSeafoodQuery) {
+      final seafood = all
+          .where(
+            (f) =>
+                f.tags.contains('seafood') ||
+                TextUtils.normalize(f.description).contains('ca') ||
+                TextUtils.normalize(f.description).contains('tom') ||
+                TextUtils.normalize(f.description).contains('cua') ||
+                TextUtils.normalize(f.description).contains('hai san'),
+          )
           .toList();
-      return (light.isEmpty ? all : light).take(3).toList();
+      if (seafood.isNotEmpty) {
+        return seafood.take(3).toList();
+      }
     }
-    if (q.contains('đói') || q.contains('thèm') || q.contains('bụng')) {
+
+    if (normalizedQ.contains('met') ||
+        normalizedQ.contains('stress') ||
+        normalizedQ.contains('ap luc') ||
+        normalizedQ.contains('buon')) {
+      final light = all
+          .where(
+            (f) =>
+                f.tags.contains('light') ||
+                f.tags.contains('healthy') ||
+                f.tags.contains('fresh'),
+          )
+          .toList();
+      return (light.isEmpty ? const <Food>[] : light).take(3).toList();
+    }
+    if (normalizedQ.contains('doi') ||
+        normalizedQ.contains('them') ||
+        normalizedQ.contains('bung')) {
       final hearty = all.where((f) => f.calories > 400).toList();
-      return (hearty.isEmpty ? all : hearty).take(3).toList();
+      return (hearty.isEmpty ? const <Food>[] : hearty).take(3).toList();
     }
-    if (q.contains('cay') || q.contains('spicy')) {
+    if (normalizedQ.contains('cay') || normalizedQ.contains('spicy')) {
       final spicy = all.where((f) => f.tags.contains('spicy')).toList();
-      return (spicy.isEmpty ? all : spicy).take(3).toList();
+      return (spicy.isEmpty ? const <Food>[] : spicy).take(3).toList();
     }
-    if (q.contains('vui') || q.contains('hạnh phúc') || q.contains('tốt')) {
-      return all.take(3).toList();
-    }
+
     final hour = DateTime.now().hour;
-    if (q.contains('sáng') || hour < 10) {
+    if (normalizedQ.contains('sang') || hour < 10) {
       return all
           .where((f) => f.mealType == 'breakfast' || f.mealType == 'any')
           .take(3)
           .toList();
     }
-    if (q.contains('trưa') || (hour >= 10 && hour < 15)) {
+    if (normalizedQ.contains('trua') || (hour >= 10 && hour < 15)) {
       return all
           .where((f) => f.mealType == 'lunch' || f.mealType == 'any')
           .take(3)
           .toList();
     }
-    if (q.contains('tối') || hour >= 18) {
+    if (normalizedQ.contains('toi') || hour >= 18) {
       return all
           .where((f) => f.mealType == 'dinner' || f.mealType == 'any')
           .take(3)
           .toList();
     }
-    return all.take(3).toList();
+
+    return const <Food>[];
   }
 
   Future<void> _onFoodTapped(Food food) async {
@@ -342,9 +386,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     setState(() => _typing = true);
 
     final lastUserMsg = _messages
-        .lastWhere((m) => m.isUser && m.text != '${food.emoji} ${food.name}',
-            orElse: () => Message(
-                text: '', isUser: true, timestamp: DateTime.now()))
+        .lastWhere(
+          (m) => m.isUser && m.text != '${food.emoji} ${food.name}',
+          orElse: () =>
+              Message(text: '', isUser: true, timestamp: DateTime.now()),
+        )
         .text;
 
     final prompt =
@@ -398,13 +444,18 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('MamGo bot',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17)),
-                Text('Trợ lý ẩm thực AI',
-                    style: TextStyle(color: Colors.white70, fontSize: 11)),
+                Text(
+                  'MamGo bot',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 17,
+                  ),
+                ),
+                Text(
+                  'Trợ lý ẩm thực AI',
+                  style: TextStyle(color: Colors.white70, fontSize: 11),
+                ),
               ],
             ),
           ],
@@ -419,8 +470,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 _messages.clear();
                 _moodCollected = false;
               });
-              final pref =
-                  context.read<UserPreferenceProvider>().preference;
+              final pref = context.read<UserPreferenceProvider>().preference;
               GeminiService.reset(pref);
               _sendGreeting();
             },
@@ -484,14 +534,18 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 ),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                    color: AppTheme.primary.withValues(alpha: 0.35)),
+                  color: AppTheme.primary.withValues(alpha: 0.35),
+                ),
               ),
               child: Center(
-                child: Text(_moodOptions[i].$1,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textDark)),
+                child: Text(
+                  _moodOptions[i].$1,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textDark,
+                  ),
+                ),
               ),
             ),
           );
@@ -507,8 +561,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         children: [
           Text('🤖', style: TextStyle(fontSize: 80)),
           SizedBox(height: 12),
-          Text('MamGo đang khởi động...',
-              style: TextStyle(color: AppTheme.textMedium, fontSize: 16)),
+          Text(
+            'MamGo đang khởi động...',
+            style: TextStyle(color: AppTheme.textMedium, fontSize: 16),
+          ),
         ],
       ),
     );
@@ -520,12 +576,15 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       child: Row(
         children: [
           Container(
-            width: 34, height: 34,
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
               color: AppTheme.primary.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: const Center(child: Text('🤖', style: TextStyle(fontSize: 18))),
+            child: const Center(
+              child: Text('🤖', style: TextStyle(fontSize: 18)),
+            ),
           ),
           const SizedBox(width: 8),
           Container(
@@ -533,12 +592,17 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(18), topRight: Radius.circular(18),
-                bottomRight: Radius.circular(18), bottomLeft: Radius.circular(4),
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
+                bottomRight: Radius.circular(18),
+                bottomLeft: Radius.circular(4),
               ),
               boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 6, offset: const Offset(0, 2))
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
               ],
             ),
             child: Row(
@@ -557,7 +621,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       duration: Duration(milliseconds: 400 + i * 150),
       builder: (_, v, _) => Container(
         margin: const EdgeInsets.symmetric(horizontal: 3),
-        width: 8, height: 8,
+        width: 8,
+        height: 8,
         decoration: BoxDecoration(
           color: AppTheme.primary.withValues(alpha: 0.4 + 0.6 * v),
           shape: BoxShape.circle,
@@ -584,14 +649,19 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               decoration: BoxDecoration(
                 color: AppTheme.chipBg,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppTheme.primary.withValues(alpha: 0.3),
+                ),
               ),
               child: Center(
-                child: Text(action.$1,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textDark)),
+                child: Text(
+                  action.$1,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textDark,
+                  ),
+                ),
               ),
             ),
           );
@@ -611,9 +681,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               controller: _ctrl,
               decoration: InputDecoration(
                 hintText: 'Hỏi MamGo về ăn uống...',
-                hintStyle: const TextStyle(color: AppTheme.textMedium, fontSize: 14),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                hintStyle: const TextStyle(
+                  color: AppTheme.textMedium,
+                  fontSize: 14,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,
@@ -630,13 +705,17 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           GestureDetector(
             onTap: () => _send(_ctrl.text),
             child: Container(
-              width: 44, height: 44,
+              width: 44,
+              height: 44,
               decoration: const BoxDecoration(
                 color: AppTheme.primary,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.send_rounded,
-                  color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.send_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ),
         ],

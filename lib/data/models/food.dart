@@ -1,27 +1,17 @@
-class Food {
-  final String id;
-  final String name;
-  final String description;
-  final List<String> tags;
-  final List<String> cuisines;
-  final int calories;
-  final String prepTime;
-  final String difficulty;
-  final String emoji;
-  final String mealType; // breakfast | lunch | dinner | any
-  final String imageUrl;
+import 'package:mamgo/domain/entities/food_entity.dart';
 
-  const Food({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.tags,
-    required this.cuisines,
-    required this.calories,
-    required this.prepTime,
-    required this.difficulty,
-    required this.emoji,
-    required this.mealType,
-    this.imageUrl = '',
+class FoodModel extends Food {
+  const FoodModel({
+    required super.id,
+    required super.name,
+    required super.description,
+    required super.tags,
+    required super.cuisines,
+    required super.calories,
+    required super.prepTime,
+    required super.difficulty,
+    required super.emoji,
+    required super.mealType,
+    super.imageUrl = '',
   });
 }

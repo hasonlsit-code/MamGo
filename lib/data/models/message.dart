@@ -1,4 +1,4 @@
-import 'package:mamgo/data/models/food.dart';
+import 'package:mamgo/domain/entities/food_entity.dart';
 
 class Message {
   final String text;

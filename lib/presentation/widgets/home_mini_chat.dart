@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mamgo/data/datasources/foods_data.dart';
-import 'package:mamgo/data/models/food.dart';
+import 'package:mamgo/domain/entities/food_entity.dart';
 import 'package:mamgo/data/datasources/gemini_service.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
 import 'package:mamgo/presentation/pages/food_detail_screen.dart';

@@ -1,6 +1,6 @@
 import 'package:mamgo/data/datasources/foods_data.dart';
-import 'package:mamgo/data/models/food.dart';
 import 'package:mamgo/data/models/user_preference.dart';
+import 'package:mamgo/domain/entities/food_entity.dart';
 
 class ChatbotService {
   static String greet(String name) =>
@@ -53,14 +53,16 @@ class ChatbotService {
   }
 
   static String _suggestMeal(
-      String mealType, UserPreference? pref, String label) {
+    String mealType,
+    UserPreference? pref,
+    String label,
+  ) {
     var foods = FoodsData.all
         .where((f) => f.mealType == mealType || f.mealType == 'any')
         .toList();
 
     if (pref != null) {
-      foods.sort((a, b) =>
-          _score(b, pref).compareTo(_score(a, pref)));
+      foods.sort((a, b) => _score(b, pref).compareTo(_score(a, pref)));
     }
 
     final top = foods.take(3).toList();
@@ -76,13 +78,17 @@ class ChatbotService {
   }
 
   static String _suggestByTag(String tag, String label) {
-    final foods =
-        FoodsData.all.where((f) => f.tags.contains(tag)).take(3).toList();
+    final foods = FoodsData.all
+        .where((f) => f.tags.contains(tag))
+        .take(3)
+        .toList();
     if (foods.isEmpty) return 'Hmm, tôi chưa có gợi ý món $label nào phù hợp!';
 
     final buf = StringBuffer('Các món $label tôi nghĩ bạn sẽ thích:\n\n');
     for (final f in foods) {
-      buf.writeln('${f.emoji} **${f.name}**\n   ${f.description.substring(0, (f.description.length > 60) ? 60 : f.description.length)}...\n');
+      buf.writeln(
+        '${f.emoji} **${f.name}**\n   ${f.description.substring(0, (f.description.length > 60) ? 60 : f.description.length)}...\n',
+      );
     }
     return buf.toString();
   }

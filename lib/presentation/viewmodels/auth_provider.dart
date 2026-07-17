@@ -1,45 +1,76 @@
 import 'package:flutter/material.dart';
-import 'package:mamgo/data/models/user_account.dart';
-import 'package:mamgo/data/datasources/auth_service.dart';
+import 'package:mamgo/domain/entities/user_account_entity.dart';
+import 'package:mamgo/domain/interface_repositories/iauth_repository.dart';
+import 'package:mamgo/domain/usecases/login_usecase.dart';
+import 'package:mamgo/domain/usecases/register_usecase.dart';
+import 'package:mamgo/data/repositories/auth_repository_impl.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final _svc = AuthService();
+  final IAuthRepository _repo;
+  final LoginUseCase _loginUseCase;
+  final RegisterUseCase _registerUseCase;
   UserAccount? _user;
+
+  AuthProvider({
+    IAuthRepository? repository,
+    LoginUseCase? loginUseCase,
+    RegisterUseCase? registerUseCase,
+  })  : _repo = repository ?? AuthRepositoryImpl(),
+        _loginUseCase =
+            loginUseCase ?? LoginUseCase(repository ?? AuthRepositoryImpl()),
+        _registerUseCase =
+            registerUseCase ?? RegisterUseCase(repository ?? AuthRepositoryImpl());
 
   UserAccount? get user => _user;
   bool get isLoggedIn => _user != null;
 
   Future<void> loadSession() async {
-    _user = await _svc.currentUser();
+    _user = await _repo.currentUser();
     notifyListeners();
   }
 
-  Future<String?> rememberedEmail() => _svc.rememberedEmail();
+  Future<String?> rememberedEmail() => _repo.rememberedEmail();
 
   /// Trả về null nếu thành công, ngược lại là thông báo lỗi.
-  Future<String?> login(String email, String password,
-      {bool remember = true}) async {
-    final account = await _svc.login(email, password);
-    if (account == null) return 'Email hoặc mật khẩu không đúng!';
+  Future<String?> login(
+    String email,
+    String password, {
+    bool remember = true,
+  }) async {
+    final result = await _loginUseCase.execute(email, password);
+    if (!result.isSuccess) return result.errorMessage;
+
+    final account = result.user!;
     _user = account;
-    await _svc.saveSession(account.email);
-    await _svc.setRememberedEmail(remember ? account.email : null);
+    await _repo.saveSession(account.email);
+    await _repo.setRememberedEmail(remember ? account.email : null);
     notifyListeners();
     return null;
   }
 
   /// Trả về null nếu thành công, ngược lại là thông báo lỗi.
   Future<String?> register(
-      String name, String email, String password) async {
-    final error = await _svc.register(
-        UserAccount(name: name, email: email, password: password));
-    if (error != null) return error;
-    // Tự động đăng nhập sau khi đăng ký
-    return login(email, password);
+    String name,
+    String email,
+    String password,
+  ) async {
+    final result = await _registerUseCase.execute(name, email, password);
+    if (!result.isSuccess) return result.errorMessage;
+
+    // Tự động đăng nhập sau khi đăng ký thành công
+    final loginResult = await _loginUseCase.execute(email, password);
+    if (!loginResult.isSuccess) return loginResult.errorMessage;
+
+    final account = loginResult.user!;
+    _user = account;
+    await _repo.saveSession(account.email);
+    await _repo.setRememberedEmail(account.email); // Mặc định ghi nhớ sau khi đăng ký
+    notifyListeners();
+    return null;
   }
 
   Future<void> logout() async {
-    await _svc.logout();
+    await _repo.logout();
     _user = null;
     notifyListeners();
   }

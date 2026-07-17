@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:mamgo/domain/entities/food_entity.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mamgo/data/datasources/foods_data.dart';
 import 'package:mamgo/data/datasources/notification_log_service.dart';
-import 'package:mamgo/data/models/food.dart';
 import 'package:mamgo/presentation/viewmodels/auth_provider.dart';
 import 'package:mamgo/presentation/viewmodels/bot_settings_provider.dart';
 import 'package:mamgo/presentation/viewmodels/user_preference_provider.dart';
@@ -63,7 +63,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _startInAppNotificationTimer() {
-    _inAppNotificationTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    _inAppNotificationTimer = Timer.periodic(const Duration(seconds: 10), (
+      timer,
+    ) {
       if (mounted) _checkInAppNotifications();
     });
   }
@@ -100,7 +102,9 @@ class _HomeScreenState extends State<HomeScreen> {
       final parts = timeStr.split(':');
       if (parts.length < 2) return false;
       return isTimeMatch(
-          int.tryParse(parts[0]) ?? -1, int.tryParse(parts[1]) ?? -1);
+        int.tryParse(parts[0]) ?? -1,
+        int.tryParse(parts[1]) ?? -1,
+      );
     }
 
     String? triggeredMeal;
@@ -141,7 +145,9 @@ class _HomeScreenState extends State<HomeScreen> {
       barrierDismissible: true,
       builder: (BuildContext ctx) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -182,7 +188,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text('Để sau', style: TextStyle(color: AppTheme.textMedium)),
+                        child: const Text(
+                          'Để sau',
+                          style: TextStyle(color: AppTheme.textMedium),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -202,7 +211,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text('Xem gợi ý', style: TextStyle(color: Colors.white)),
+                        child: const Text(
+                          'Xem gợi ý',
+                          style: TextStyle(color: Colors.white),
+                        ),
                       ),
                     ),
                   ],
@@ -225,7 +237,8 @@ class _HomeScreenState extends State<HomeScreen> {
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('🎉 Gói Pro sắp ra mắt, hãy chờ đón nhé!')),
+              content: Text('🎉 Gói Pro sắp ra mắt, hãy chờ đón nhé!'),
+            ),
           );
         },
       ),
@@ -233,32 +246,39 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   static const _navItems = [
+    BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Trang chủ'),
     BottomNavigationBarItem(
-        icon: Icon(Icons.home_rounded), label: 'Trang chủ'),
+      icon: Icon(Icons.lightbulb_outline_rounded),
+      label: 'Đo lường',
+    ),
     BottomNavigationBarItem(
-        icon: Icon(Icons.lightbulb_outline_rounded), label: 'Đo lường'),
+      icon: Icon(Icons.menu_book_rounded),
+      label: 'Cẩm nang',
+    ),
     BottomNavigationBarItem(
-        icon: Icon(Icons.menu_book_rounded), label: 'Cẩm nang'),
+      icon: Icon(Icons.smart_toy_outlined),
+      label: 'Chatbot',
+    ),
     BottomNavigationBarItem(
-        icon: Icon(Icons.smart_toy_outlined), label: 'Chatbot'),
-    BottomNavigationBarItem(
-        icon: Icon(Icons.person_outline_rounded), label: 'Hồ sơ'),
+      icon: Icon(Icons.person_outline_rounded),
+      label: 'Hồ sơ',
+    ),
   ];
 
   List<Widget> get _screens => [
-        _HomeTab(onSwitchTab: (i) => setState(() => _tab = i)),
-        const MealAnalysisScreen(),
-        const RecipeLibraryScreen(),
-        ChatbotScreen(
-          initialPayload: _activePayload,
-          onPayloadConsumed: () {
-            setState(() {
-              _activePayload = null;
-            });
-          },
-        ),
-        const ProfileScreen(),
-      ];
+    _HomeTab(onSwitchTab: (i) => setState(() => _tab = i)),
+    const MealAnalysisScreen(),
+    const RecipeLibraryScreen(),
+    ChatbotScreen(
+      initialPayload: _activePayload,
+      onPayloadConsumed: () {
+        setState(() {
+          _activePayload = null;
+        });
+      },
+    ),
+    const ProfileScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -268,9 +288,12 @@ class _HomeScreenState extends State<HomeScreen> {
       body: LayoutBuilder(
         builder: (context, box) {
           // Mặc định góc dưới phải; sau đó theo vị trí người dùng kéo thả
-          final pos = _botOffset ??
-              Offset(box.maxWidth - _botSize - 16,
-                  box.maxHeight - _botSize - 20);
+          final pos =
+              _botOffset ??
+              Offset(
+                box.maxWidth - _botSize - 16,
+                box.maxHeight - _botSize - 20,
+              );
           return Stack(
             children: [
               Container(
@@ -300,8 +323,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       final next = d.globalPosition - _botGrab;
                       _botOffset = Offset(
                         next.dx.clamp(4.0, box.maxWidth - _botSize - 4),
-                        next.dy.clamp(
-                            topPad + 4, box.maxHeight - _botSize - 4),
+                        next.dy.clamp(topPad + 4, box.maxHeight - _botSize - 4),
                       );
                     }),
                     child: const FloatingBot(),
@@ -331,8 +353,10 @@ class _HomeScreenState extends State<HomeScreen> {
           unselectedItemColor: AppTheme.textMedium,
           backgroundColor: Colors.transparent,
           elevation: 0,
-          selectedLabelStyle:
-              const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+          selectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 11,
+          ),
           items: _navItems,
         ),
       ),
@@ -392,9 +416,14 @@ class _HomeTabState extends State<_HomeTab> {
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 248,
+              height: 256,
               child: ListView.builder(
-                padding: const EdgeInsets.only(left: 16),
+                padding: const EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 4,
+                  bottom: 12,
+                ),
                 scrollDirection: Axis.horizontal,
                 itemCount: suggestions.length,
                 itemBuilder: (_, i) => FoodCard(
@@ -414,7 +443,8 @@ class _HomeTabState extends State<_HomeTab> {
               actionLabel: 'Điều chỉnh nhắc nhở',
               onAction: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                    builder: (_) => const NotificationSettingsScreen()),
+                  builder: (_) => const NotificationSettingsScreen(),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -435,8 +465,8 @@ class _HomeTabState extends State<_HomeTab> {
     final greeting = hour < 12
         ? 'Chúc bạn buổi sáng tốt lành!'
         : hour < 18
-            ? 'Chúc bạn buổi chiều vui vẻ!'
-            : 'Chúc bạn buổi tối ấm áp!';
+        ? 'Chúc bạn buổi chiều vui vẻ!'
+        : 'Chúc bạn buổi tối ấm áp!';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
@@ -460,18 +490,22 @@ class _HomeTabState extends State<_HomeTab> {
                         ),
                         children: [
                           TextSpan(
-                              text: 'Mam',
-                              style: TextStyle(color: AppTheme.primary)),
+                            text: 'Mam',
+                            style: TextStyle(color: AppTheme.primary),
+                          ),
                           TextSpan(
-                              text: 'Go',
-                              style: TextStyle(color: AppTheme.orange)),
+                            text: 'Go',
+                            style: TextStyle(color: AppTheme.orange),
+                          ),
                         ],
                       ),
                     ),
                     const Text(
                       'Ăn đúng giờ, sống khỏe mỗi ngày',
                       style: TextStyle(
-                          color: AppTheme.textMedium, fontSize: 12),
+                        color: AppTheme.textMedium,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -508,9 +542,9 @@ class _HomeTabState extends State<_HomeTab> {
 
   Widget _buildBell() {
     return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-      ),
+      onTap: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const NotificationsScreen())),
       child: Container(
         width: 46,
         height: 46,
@@ -528,8 +562,11 @@ class _HomeTabState extends State<_HomeTab> {
         child: Stack(
           children: [
             const Center(
-              child: Icon(Icons.notifications_none_rounded,
-                  color: AppTheme.textDark, size: 24),
+              child: Icon(
+                Icons.notifications_none_rounded,
+                color: AppTheme.textDark,
+                size: 24,
+              ),
             ),
             Positioned(
               top: 10,
@@ -554,7 +591,8 @@ class _HomeTabState extends State<_HomeTab> {
     return GestureDetector(
       onTap: () => ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('🎉 Gói Pro sắp ra mắt, hãy chờ đón nhé!')),
+          content: Text('🎉 Gói Pro sắp ra mắt, hãy chờ đón nhé!'),
+        ),
       ),
       child: Container(
         padding: const EdgeInsets.all(18),
@@ -583,10 +621,15 @@ class _HomeTabState extends State<_HomeTab> {
                 color: Colors.white.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
                 border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.5), width: 1.5),
+                  color: Colors.white.withValues(alpha: 0.5),
+                  width: 1.5,
+                ),
               ),
-              child: const Icon(Icons.workspace_premium_rounded,
-                  color: Colors.white, size: 30),
+              child: const Icon(
+                Icons.workspace_premium_rounded,
+                color: Colors.white,
+                size: 30,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -605,8 +648,11 @@ class _HomeTabState extends State<_HomeTab> {
                         ),
                       ),
                       SizedBox(width: 6),
-                      Icon(Icons.auto_awesome_rounded,
-                          color: Color(0xFFFFE082), size: 16),
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        color: Color(0xFFFFE082),
+                        size: 16,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -614,12 +660,17 @@ class _HomeTabState extends State<_HomeTab> {
                     'Đăng ký gói Pro ngay để mở khóa phân tích dinh dưỡng '
                     'không giới hạn, thực đơn cá nhân hóa & nhiều hơn nữa!',
                     style: TextStyle(
-                        color: Colors.white, fontSize: 11.5, height: 1.4),
+                      color: Colors.white,
+                      fontSize: 11.5,
+                      height: 1.4,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 7),
+                      horizontal: 14,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
@@ -662,12 +713,10 @@ class _HomeTabState extends State<_HomeTab> {
           final t = _NextMealInfo.parseToday(now, time);
           final done = now.isAfter(t);
           return Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
             decoration: BoxDecoration(
               border: i < meals.length - 1
-                  ? const Border(
-                      bottom: BorderSide(color: Color(0xFFEFF3F9)))
+                  ? const Border(bottom: BorderSide(color: Color(0xFFEFF3F9)))
                   : null,
             ),
             child: Row(
@@ -696,7 +745,9 @@ class _HomeTabState extends State<_HomeTab> {
                   child: Text(
                     label,
                     style: const TextStyle(
-                        color: AppTheme.textDark, fontSize: 14),
+                      color: AppTheme.textDark,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
                 Text(
@@ -718,8 +769,11 @@ class _HomeTabState extends State<_HomeTab> {
   // ── Tiện ích ───────────────────────────────────────────────────────────────
   List<Food> _buildSuggestions(dynamic pref) {
     final hour = DateTime.now().hour;
-    final mealType =
-        hour < 10 ? 'breakfast' : hour < 15 ? 'lunch' : 'dinner';
+    final mealType = hour < 10
+        ? 'breakfast'
+        : hour < 15
+        ? 'lunch'
+        : 'dinner';
 
     List<Food> list = FoodsData.all
         .where((f) => f.mealType == mealType || f.mealType == 'any')
@@ -778,8 +832,11 @@ class _HomeTabState extends State<_HomeTab> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const Icon(Icons.chevron_right_rounded,
-                      color: AppTheme.primary, size: 18),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppTheme.primary,
+                    size: 18,
+                  ),
                 ],
               ),
             ),
@@ -795,11 +852,13 @@ class _HomeTabState extends State<_HomeTab> {
         return FadeTransition(
           opacity: animation,
           child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.04),
-              end: Offset.zero,
-            ).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeOut)),
+            position:
+                Tween<Offset>(
+                  begin: const Offset(0, 0.04),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                ),
             child: child,
           ),
         );
@@ -887,8 +946,11 @@ class _NextMealCardState extends State<_NextMealCard> {
                 const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.calendar_today_rounded,
-                        color: Colors.white, size: 13),
+                    Icon(
+                      Icons.calendar_today_rounded,
+                      color: Colors.white,
+                      size: 13,
+                    ),
                     SizedBox(width: 5),
                     Text(
                       'Bữa tiếp theo',
@@ -939,7 +1001,9 @@ class _NextMealCardState extends State<_NextMealCard> {
                         // Đồng hồ đếm ngược tích tắc giờ:phút:giây
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.orange.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
@@ -947,8 +1011,11 @@ class _NextMealCardState extends State<_NextMealCard> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.timer_outlined,
-                                  size: 13, color: AppTheme.orange),
+                              const Icon(
+                                Icons.timer_outlined,
+                                size: 13,
+                                color: AppTheme.orange,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 meal.digitalCountdown,
@@ -971,7 +1038,8 @@ class _NextMealCardState extends State<_NextMealCard> {
                             minHeight: 6,
                             backgroundColor: const Color(0xFFFFE5CC),
                             valueColor: const AlwaysStoppedAnimation(
-                                AppTheme.orange),
+                              AppTheme.orange,
+                            ),
                           ),
                         ),
                       ],
@@ -985,16 +1053,17 @@ class _NextMealCardState extends State<_NextMealCard> {
                       height: 58,
                       fit: BoxFit.cover,
                       placeholder: (_, _) => Container(
-                          width: 58,
-                          height: 58,
-                          color: const Color(0xFFFFF3E5)),
+                        width: 58,
+                        height: 58,
+                        color: const Color(0xFFFFF3E5),
+                      ),
                       errorWidget: (_, _, _) => Container(
                         width: 58,
                         height: 58,
                         color: const Color(0xFFFFF3E5),
                         child: const Center(
-                            child:
-                                Text('🥗', style: TextStyle(fontSize: 28))),
+                          child: Text('🥗', style: TextStyle(fontSize: 28)),
+                        ),
                       ),
                     ),
                   ),
@@ -1089,8 +1158,7 @@ class _NextMealInfo {
 
     final total = next.$4.difference(prev).inMinutes;
     final elapsed = now.difference(prev).inMinutes;
-    final progress =
-        total <= 0 ? 0.0 : (elapsed / total).clamp(0.0, 1.0);
+    final progress = total <= 0 ? 0.0 : (elapsed / total).clamp(0.0, 1.0);
 
     return _NextMealInfo(
       label: next.$1,
@@ -1131,10 +1199,14 @@ class _ProPromoDialogState extends State<_ProPromoDialog>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 550));
+      vsync: this,
+      duration: const Duration(milliseconds: 550),
+    );
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-    _scale = Tween<double>(begin: 0.85, end: 1.0)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
+    _scale = Tween<double>(
+      begin: 0.85,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
     _ctrl.forward();
   }
 
@@ -1166,7 +1238,7 @@ class _ProPromoDialogState extends State<_ProPromoDialog>
                     colors: [
                       Color(0xFF0D47A1),
                       Color(0xFF1E88E5),
-                      Color(0xFFFF8A00)
+                      Color(0xFFFF8A00),
                     ],
                     stops: [0.0, 0.55, 1.0],
                     begin: Alignment.topLeft,
@@ -1186,7 +1258,9 @@ class _ProPromoDialogState extends State<_ProPromoDialog>
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(10),
@@ -1194,8 +1268,11 @@ class _ProPromoDialogState extends State<_ProPromoDialog>
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.auto_awesome_rounded,
-                              color: Color(0xFFFFE082), size: 13),
+                          Icon(
+                            Icons.auto_awesome_rounded,
+                            color: Color(0xFFFFE082),
+                            size: 13,
+                          ),
                           SizedBox(width: 5),
                           Text(
                             'ƯU ĐÃI THÀNH VIÊN MỚI',
@@ -1213,14 +1290,18 @@ class _ProPromoDialogState extends State<_ProPromoDialog>
                     RichText(
                       text: const TextSpan(
                         style: TextStyle(
-                            fontSize: 25, fontWeight: FontWeight.w900),
+                          fontSize: 25,
+                          fontWeight: FontWeight.w900,
+                        ),
                         children: [
                           TextSpan(
-                              text: 'MamGo ',
-                              style: TextStyle(color: Colors.white)),
+                            text: 'MamGo ',
+                            style: TextStyle(color: Colors.white),
+                          ),
                           TextSpan(
-                              text: 'Pro',
-                              style: TextStyle(color: Color(0xFFFFE082))),
+                            text: 'Pro',
+                            style: TextStyle(color: Color(0xFFFFE082)),
+                          ),
                         ],
                       ),
                     ),
@@ -1229,7 +1310,10 @@ class _ProPromoDialogState extends State<_ProPromoDialog>
                       'Mở khoá toàn bộ trải nghiệm ẩm thực\nAI cá nhân hoá dành riêng cho bạn',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          color: Colors.white70, fontSize: 12.5, height: 1.4),
+                        color: Colors.white70,
+                        fontSize: 12.5,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 18),
                     Container(
@@ -1241,28 +1325,33 @@ class _ProPromoDialogState extends State<_ProPromoDialog>
                       ),
                       child: Column(
                         children: _benefits
-                            .map((b) => Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 5),
-                                  child: Row(
-                                    children: [
-                                      Icon(b.$1,
-                                          color: const Color(0xFFFFE082),
-                                          size: 18),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          b.$2,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12.5,
-                                            fontWeight: FontWeight.w500,
-                                          ),
+                            .map(
+                              (b) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 5,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      b.$1,
+                                      color: const Color(0xFFFFE082),
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        b.$2,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ))
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
                             .toList(),
                       ),
                     ),
@@ -1293,7 +1382,9 @@ class _ProPromoDialogState extends State<_ProPromoDialog>
                           child: Text(
                             '/ tháng',
                             style: TextStyle(
-                                color: Colors.white70, fontSize: 12),
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ],
@@ -1309,12 +1400,15 @@ class _ProPromoDialogState extends State<_ProPromoDialog>
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16)),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
                         child: const Text(
                           'Nâng cấp ngay ✨',
                           style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold),
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -1348,8 +1442,11 @@ class _ProPromoDialogState extends State<_ProPromoDialog>
                       color: Colors.black.withValues(alpha: 0.22),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.close_rounded,
-                        color: Colors.white, size: 16),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
                   ),
                 ),
               ),
@@ -1373,7 +1470,8 @@ class _CrownBadge extends StatelessWidget {
         color: Colors.white,
         shape: BoxShape.circle,
         border: const Border.fromBorderSide(
-            BorderSide(color: Color(0xFFFFE082), width: 3)),
+          BorderSide(color: Color(0xFFFFE082), width: 3),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.25),
@@ -1383,8 +1481,11 @@ class _CrownBadge extends StatelessWidget {
         ],
       ),
       child: const Center(
-        child: Icon(Icons.workspace_premium_rounded,
-            color: Color(0xFFFFA000), size: 38),
+        child: Icon(
+          Icons.workspace_premium_rounded,
+          color: Color(0xFFFFA000),
+          size: 38,
+        ),
       ),
     );
   }

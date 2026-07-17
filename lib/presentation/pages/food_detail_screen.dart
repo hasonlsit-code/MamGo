@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mamgo/data/datasources/recipes_data.dart';
-import 'package:mamgo/data/models/food.dart';
 import 'package:mamgo/data/models/recipe.dart';
 import 'package:mamgo/data/datasources/gemini_service.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
+import 'package:mamgo/domain/entities/food_entity.dart';
 import 'package:mamgo/presentation/pages/recipe_detail_screen.dart';
 import 'package:mamgo/presentation/widgets/animated_mascot.dart';
 
@@ -28,7 +28,9 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
   void initState() {
     super.initState();
     _fadeCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500));
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
     _fadeCtrl.forward();
   }
@@ -78,8 +80,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
               child: Container(
                 decoration: const BoxDecoration(
                   color: AppTheme.background,
-                  borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(28)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
@@ -121,8 +122,11 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
               color: Colors.black.withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.arrow_back_ios_new,
-                color: Colors.white, size: 18),
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              color: Colors.white,
+              size: 18,
+            ),
           ),
         ),
       ),
@@ -135,17 +139,16 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
                 ? Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          AppTheme.primaryDark,
-                          AppTheme.primary,
-                        ],
+                        colors: [AppTheme.primaryDark, AppTheme.primary],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                     ),
                     child: Center(
-                      child: Text(food.emoji,
-                          style: const TextStyle(fontSize: 110)),
+                      child: Text(
+                        food.emoji,
+                        style: const TextStyle(fontSize: 110),
+                      ),
                     ),
                   )
                 : CachedNetworkImage(
@@ -175,7 +178,9 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.primary,
                       borderRadius: BorderRadius.circular(8),
@@ -184,14 +189,15 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
                       food.mealType == 'breakfast'
                           ? '🌅 Bữa sáng'
                           : food.mealType == 'lunch'
-                              ? '☀️ Bữa trưa'
-                              : food.mealType == 'dinner'
-                                  ? '🌙 Bữa tối'
-                                  : '🍽️ Mọi bữa',
+                          ? '☀️ Bữa trưa'
+                          : food.mealType == 'dinner'
+                          ? '🌙 Bữa tối'
+                          : '🍽️ Mọi bữa',
                       style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600),
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -201,9 +207,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
                       color: Colors.white,
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(blurRadius: 10, color: Colors.black54)
-                      ],
+                      shadows: [Shadow(blurRadius: 10, color: Colors.black54)],
                     ),
                   ),
                 ],
@@ -225,7 +229,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
         ),
       ),
       child: Center(
-          child: Text(food.emoji, style: const TextStyle(fontSize: 90))),
+        child: Text(food.emoji, style: const TextStyle(fontSize: 90)),
+      ),
     );
   }
 
@@ -250,20 +255,22 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
               Text(
                 food.cuisines.join(' · '),
                 style: const TextStyle(
-                    fontSize: 13, color: AppTheme.textMedium),
+                  fontSize: 13,
+                  color: AppTheme.textMedium,
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(width: 12),
         Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: _diffColor(food.difficulty).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-                color: _diffColor(food.difficulty).withValues(alpha: 0.3)),
+              color: _diffColor(food.difficulty).withValues(alpha: 0.3),
+            ),
           ),
           child: Text(
             food.difficulty,
@@ -281,20 +288,31 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
   Widget _statsRow(Food food) {
     return Row(
       children: [
-        _statCard(Icons.local_fire_department_rounded,
-            '${food.calories}', 'kcal', AppTheme.primary),
+        _statCard(
+          Icons.local_fire_department_rounded,
+          '${food.calories}',
+          'kcal',
+          AppTheme.primary,
+        ),
         const SizedBox(width: 12),
-        _statCard(Icons.schedule_rounded, food.prepTime, 'Thời gian',
-            AppTheme.primaryDark),
+        _statCard(
+          Icons.schedule_rounded,
+          food.prepTime,
+          'Thời gian',
+          AppTheme.primaryDark,
+        ),
         const SizedBox(width: 12),
-        _statCard(Icons.restaurant_menu_rounded, food.difficulty,
-            'Độ khó', AppTheme.accent),
+        _statCard(
+          Icons.restaurant_menu_rounded,
+          food.difficulty,
+          'Độ khó',
+          AppTheme.accent,
+        ),
       ],
     );
   }
 
-  Widget _statCard(
-      IconData icon, String value, String label, Color color) {
+  Widget _statCard(IconData icon, String value, String label, Color color) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
@@ -313,15 +331,19 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
           children: [
             Icon(icon, color: color, size: 22),
             const SizedBox(height: 6),
-            Text(value,
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: color)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 10, color: AppTheme.textMedium)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 10, color: AppTheme.textMedium),
+            ),
           ],
         ),
       ),
@@ -334,8 +356,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: AppTheme.primary.withValues(alpha: 0.1)),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -353,9 +374,10 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
             child: Text(
               food.description,
               style: const TextStyle(
-                  fontSize: 14,
-                  color: AppTheme.textDark,
-                  height: 1.65),
+                fontSize: 14,
+                color: AppTheme.textDark,
+                height: 1.65,
+              ),
             ),
           ),
         ],
@@ -369,13 +391,11 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
       runSpacing: 8,
       children: food.tags.map((tag) {
         return Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
           decoration: BoxDecoration(
             color: AppTheme.chipBg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-                color: AppTheme.primary.withValues(alpha: 0.2)),
+            border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
           ),
           child: Text(
             '#$tag',
@@ -426,8 +446,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Center(
-                child: Text(recipe.emoji,
-                    style: const TextStyle(fontSize: 26)),
+                child: Text(recipe.emoji, style: const TextStyle(fontSize: 26)),
               ),
             ),
             const SizedBox(width: 14),
@@ -457,8 +476,11 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
                 color: Colors.white.withValues(alpha: 0.22),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.arrow_forward_rounded,
-                  color: Colors.white, size: 18),
+              child: const Icon(
+                Icons.arrow_forward_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
             ),
           ],
         ),
@@ -512,8 +534,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
                     SizedBox(height: 3),
                     Text(
                       'MămGo AI hướng dẫn từng bước chi tiết',
-                      style: TextStyle(
-                          color: Colors.white70, fontSize: 12),
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
                 ),
@@ -524,8 +545,11 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
                   color: Colors.white.withValues(alpha: 0.22),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_forward_rounded,
-                    color: Colors.white, size: 18),
+                child: const Icon(
+                  Icons.arrow_forward_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
             ],
           ),
@@ -539,8 +563,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-              color: AppTheme.primary.withValues(alpha: 0.12)),
+          border: Border.all(color: AppTheme.primary.withValues(alpha: 0.12)),
         ),
         child: Row(
           children: [
@@ -553,9 +576,10 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
                   const Text(
                     'MămGo đang soạn công thức...',
                     style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textDark),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textDark,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   ClipRRect(
@@ -579,8 +603,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-            color: AppTheme.primary.withValues(alpha: 0.14)),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.14)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),

@@ -1,29 +1,22 @@
-class UserPreference {
-  final String name;
-  final List<String> tastePreferences;
-  final List<String> dietaryRestrictions;
-  final List<String> favoriteCuisines;
-  final bool breakfastReminder;
-  final bool lunchReminder;
-  final bool dinnerReminder;
-  final String breakfastTime;
-  final String lunchTime;
-  final String dinnerTime;
+import 'package:mamgo/domain/entities/user_preference_entity.dart';
 
-  const UserPreference({
-    required this.name,
-    required this.tastePreferences,
-    required this.dietaryRestrictions,
-    required this.favoriteCuisines,
-    this.breakfastReminder = false,
-    this.lunchReminder = false,
-    this.dinnerReminder = false,
-    this.breakfastTime = '07:00',
-    this.lunchTime = '12:00',
-    this.dinnerTime = '18:30',
+export 'package:mamgo/domain/entities/user_preference_entity.dart';
+
+class UserPreferenceModel extends UserPreference {
+  const UserPreferenceModel({
+    required super.name,
+    required super.tastePreferences,
+    required super.dietaryRestrictions,
+    required super.favoriteCuisines,
+    super.breakfastReminder = false,
+    super.lunchReminder = false,
+    super.dinnerReminder = false,
+    super.breakfastTime = '07:00',
+    super.lunchTime = '12:00',
+    super.dinnerTime = '18:30',
   });
 
-  UserPreference copyWith({
+  UserPreferenceModel copyWith({
     String? name,
     List<String>? tastePreferences,
     List<String>? dietaryRestrictions,
@@ -35,7 +28,7 @@ class UserPreference {
     String? lunchTime,
     String? dinnerTime,
   }) {
-    return UserPreference(
+    return UserPreferenceModel(
       name: name ?? this.name,
       tastePreferences: tastePreferences ?? this.tastePreferences,
       dietaryRestrictions: dietaryRestrictions ?? this.dietaryRestrictions,
@@ -62,7 +55,8 @@ class UserPreference {
         'dinnerTime': dinnerTime,
       };
 
-  factory UserPreference.fromMap(Map<String, dynamic> map) => UserPreference(
+  factory UserPreferenceModel.fromMap(Map<String, dynamic> map) =>
+      UserPreferenceModel(
         name: map['name'] ?? '',
         tastePreferences: _splitList(map['tastePreferences']),
         dietaryRestrictions: _splitList(map['dietaryRestrictions']),

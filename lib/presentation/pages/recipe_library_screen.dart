@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mamgo/data/datasources/recipes_data.dart';
 import 'package:mamgo/data/models/recipe.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
+import 'package:mamgo/core/utils/text_utils.dart';
 import 'package:mamgo/presentation/widgets/recipe_card.dart';
 import 'package:mamgo/presentation/pages/recipe_detail_screen.dart';
 
@@ -13,25 +14,46 @@ class RecipeLibraryScreen extends StatefulWidget {
 }
 
 class _RecipeLibraryScreenState extends State<RecipeLibraryScreen> {
+  final TextEditingController _searchCtrl = TextEditingController();
   String _search = '';
   String _cuisine = 'Tất cả';
-  final _cuisines = ['Tất cả', 'Việt Nam', 'Hàn Quốc', 'Nhật Bản', 'Phương Tây'];
+  final _cuisines = [
+    'Tất cả',
+    'Việt Nam',
+    'Hàn Quốc',
+    'Nhật Bản',
+    'Phương Tây',
+  ];
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  bool _matchesSearch(Recipe recipe, String q) {
+    if (q.isEmpty) return true;
+
+    final searchableFields = [
+      TextUtils.normalize(recipe.name),
+      TextUtils.normalize(recipe.description),
+      TextUtils.normalize(recipe.cuisine),
+      ...recipe.tags.map(TextUtils.normalize),
+    ];
+
+    return searchableFields.any((field) => field.contains(q));
+  }
 
   List<Recipe> get _filtered {
-    var recipes = RecipesData.all;
-    if (_cuisine != 'Tất cả') {
-      recipes = recipes.where((r) => r.cuisine == _cuisine).toList();
-    }
-    if (_search.isNotEmpty) {
-      final q = _search.toLowerCase();
-      recipes = recipes
-          .where((r) =>
-              r.name.toLowerCase().contains(q) ||
-              r.description.toLowerCase().contains(q) ||
-              r.tags.any((t) => t.contains(q)))
-          .toList();
-    }
-    return recipes;
+    final q = TextUtils.normalize(_search);
+
+    return RecipesData.all.where((recipe) {
+      final matchesCuisine =
+          _cuisine == 'Tất cả' ||
+          TextUtils.normalize(recipe.cuisine) == TextUtils.normalize(_cuisine);
+      final matchesSearch = _matchesSearch(recipe, q);
+      return matchesCuisine && matchesSearch;
+    }).toList();
   }
 
   @override
@@ -54,9 +76,13 @@ class _RecipeLibraryScreenState extends State<RecipeLibraryScreen> {
                   ),
                 ),
               ),
-              title: const Text('📖 Cẩm nang nấu ăn',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
+              title: const Text(
+                '📖 Cẩm nang nấu ăn',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               centerTitle: false,
               titlePadding: const EdgeInsets.only(left: 16, bottom: 14),
             ),
@@ -75,9 +101,10 @@ class _RecipeLibraryScreenState extends State<RecipeLibraryScreen> {
                   Text(
                     '${_filtered.length} công thức',
                     style: const TextStyle(
-                        color: AppTheme.textMedium,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500),
+                      color: AppTheme.textMedium,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(height: 10),
                 ],
@@ -112,16 +139,40 @@ class _RecipeLibraryScreenState extends State<RecipeLibraryScreen> {
 
   Widget _searchBar() {
     return TextField(
-      onChanged: (v) => setState(() => _search = v),
+      controller: _searchCtrl,
+      textInputAction: TextInputAction.search,
+      onChanged: (v) => setState(() => _search = v.trim()),
+      onSubmitted: (v) => setState(() => _search = v.trim()),
       decoration: InputDecoration(
-        hintText: 'Tìm kiếm công thức...',
+        hintText: 'Tìm tên món, nguyên liệu, kiểu ẩm thực...',
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
         prefixIcon: const Icon(Icons.search, color: AppTheme.primary),
-        suffixIcon: _search.isNotEmpty
+        suffixIcon: _searchCtrl.text.isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.close, color: AppTheme.textMedium),
-                onPressed: () => setState(() => _search = ''),
+                onPressed: () {
+                  _searchCtrl.clear();
+                  setState(() => _search = '');
+                },
               )
             : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFE6D9D0)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFE6D9D0)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppTheme.primary, width: 1.4),
+        ),
       ),
     );
   }
@@ -143,13 +194,16 @@ class _RecipeLibraryScreenState extends State<RecipeLibraryScreen> {
                 color: selected ? AppTheme.primary : Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                    color: selected
-                        ? AppTheme.primary
-                        : const Color(0xFFE0D0C8)),
+                  color: selected ? AppTheme.primary : const Color(0xFFE0D0C8),
+                ),
                 boxShadow: selected
-                    ? [BoxShadow(
-                        color: AppTheme.primary.withValues(alpha: 0.3),
-                        blurRadius: 6, offset: const Offset(0, 2))]
+                    ? [
+                        BoxShadow(
+                          color: AppTheme.primary.withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
                     : [],
               ),
               child: Text(
@@ -175,8 +229,10 @@ class _RecipeLibraryScreenState extends State<RecipeLibraryScreen> {
           children: [
             Text('🍳', style: TextStyle(fontSize: 60)),
             SizedBox(height: 12),
-            Text('Không tìm thấy công thức phù hợp',
-                style: TextStyle(color: AppTheme.textMedium, fontSize: 15)),
+            Text(
+              'Không tìm thấy công thức phù hợp',
+              style: TextStyle(color: AppTheme.textMedium, fontSize: 15),
+            ),
           ],
         ),
       ),

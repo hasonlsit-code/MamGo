@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:mamgo/data/models/food.dart';
+import 'package:mamgo/domain/entities/food_entity.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
 
 class FoodCard extends StatelessWidget {

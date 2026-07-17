@@ -47,9 +47,12 @@ class _NotificationSettingsScreenState
   void _parseTime(String s, Function(TimeOfDay) fn) {
     final parts = s.split(':');
     if (parts.length == 2) {
-      fn(TimeOfDay(
+      fn(
+        TimeOfDay(
           hour: int.tryParse(parts[0]) ?? 0,
-          minute: int.tryParse(parts[1]) ?? 0));
+          minute: int.tryParse(parts[1]) ?? 0,
+        ),
+      );
     }
   }
 
@@ -66,14 +69,17 @@ class _NotificationSettingsScreenState
     final p = prov.preference;
     if (p == null) return;
     final email = context.read<AuthProvider>().user?.email ?? '';
-    await prov.save(p.copyWith(
-      breakfastReminder: _breakfastOn,
-      lunchReminder: _lunchOn,
-      dinnerReminder: _dinnerOn,
-      breakfastTime: _fmtTime(_breakfastTime),
-      lunchTime: _fmtTime(_lunchTime),
-      dinnerTime: _fmtTime(_dinnerTime),
-    ), email);
+    await prov.save(
+      p.copyWith(
+        breakfastReminder: _breakfastOn,
+        lunchReminder: _lunchOn,
+        dinnerReminder: _dinnerOn,
+        breakfastTime: _fmtTime(_breakfastTime),
+        lunchTime: _fmtTime(_lunchTime),
+        dinnerTime: _fmtTime(_dinnerTime),
+      ),
+      email,
+    );
 
     await _logScheduleConfirmations();
 
@@ -92,7 +98,12 @@ class _NotificationSettingsScreenState
   Future<void> _logScheduleConfirmations() async {
     final now = DateTime.now();
 
-    Future<void> logOne(bool on, TimeOfDay t, String label, String emoji) async {
+    Future<void> logOne(
+      bool on,
+      TimeOfDay t,
+      String label,
+      String emoji,
+    ) async {
       if (!on) return;
       var target = DateTime(now.year, now.month, now.day, t.hour, t.minute);
       if (target.isBefore(now)) target = target.add(const Duration(days: 1));
@@ -117,9 +128,7 @@ class _NotificationSettingsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text('🔔 Điều chỉnh nhắc nhở'),
-      ),
+      appBar: AppBar(title: const Text('🔔 Điều chỉnh nhắc nhở')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(18),
         child: Column(
@@ -145,8 +154,7 @@ class _NotificationSettingsScreenState
               isOn: _lunchOn,
               time: _lunchTime,
               onToggle: (v) => setState(() => _lunchOn = v),
-              onPickTime: () =>
-                  _pickTime(_lunchTime, (t) => _lunchTime = t),
+              onPickTime: () => _pickTime(_lunchTime, (t) => _lunchTime = t),
             ),
             const SizedBox(height: 14),
             _mealTile(
@@ -156,8 +164,7 @@ class _NotificationSettingsScreenState
               isOn: _dinnerOn,
               time: _dinnerTime,
               onToggle: (v) => setState(() => _dinnerOn = v),
-              onPickTime: () =>
-                  _pickTime(_dinnerTime, (t) => _dinnerTime = t),
+              onPickTime: () => _pickTime(_dinnerTime, (t) => _dinnerTime = t),
             ),
             const SizedBox(height: 28),
             SizedBox(
@@ -166,7 +173,10 @@ class _NotificationSettingsScreenState
               child: ElevatedButton.icon(
                 onPressed: _save,
                 icon: const Icon(Icons.save_rounded),
-                label: const Text('Lưu cài đặt', style: TextStyle(fontSize: 16)),
+                label: const Text(
+                  'Lưu cài đặt',
+                  style: TextStyle(fontSize: 16),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -202,16 +212,20 @@ class _NotificationSettingsScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Nhắc nhở thông minh',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16)),
+                Text(
+                  'Nhắc nhở thông minh',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
                 SizedBox(height: 4),
                 Text(
-                    'MămGo sẽ nhắc bạn đúng giờ ăn và gợi ý món ngon phù hợp!',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
-                    maxLines: 2),
+                  'MămGo sẽ nhắc bạn đúng giờ ăn và gợi ý món ngon phù hợp!',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                  maxLines: 2,
+                ),
               ],
             ),
           ),
@@ -242,9 +256,10 @@ class _NotificationSettingsScreenState
         ),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 3)),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: Column(
@@ -257,14 +272,21 @@ class _NotificationSettingsScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: AppTheme.textDark)),
-                    Text(subtitle,
-                        style: const TextStyle(
-                            fontSize: 12, color: AppTheme.textMedium)),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: AppTheme.textDark,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textMedium,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -282,19 +304,25 @@ class _NotificationSettingsScreenState
             GestureDetector(
               onTap: onPickTime,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: AppTheme.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                      color: AppTheme.primary.withValues(alpha: 0.3)),
+                    color: AppTheme.primary.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.access_time,
-                        color: AppTheme.primary, size: 18),
+                    const Icon(
+                      Icons.access_time,
+                      color: AppTheme.primary,
+                      size: 18,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       _fmtTime(time),
@@ -305,8 +333,7 @@ class _NotificationSettingsScreenState
                       ),
                     ),
                     const SizedBox(width: 6),
-                    const Icon(Icons.arrow_drop_down,
-                        color: AppTheme.primary),
+                    const Icon(Icons.arrow_drop_down, color: AppTheme.primary),
                   ],
                 ),
               ),
@@ -323,8 +350,7 @@ class _NotificationSettingsScreenState
       decoration: BoxDecoration(
         color: AppTheme.secondary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border:
-            Border.all(color: AppTheme.secondary.withValues(alpha: 0.3)),
+        border: Border.all(color: AppTheme.secondary.withValues(alpha: 0.3)),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,17 +361,24 @@ class _NotificationSettingsScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Mẹo nhỏ',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.secondary,
-                        fontSize: 14)),
+                Text(
+                  'Mẹo nhỏ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.secondary,
+                    fontSize: 14,
+                  ),
+                ),
                 SizedBox(height: 4),
                 Text(
-                    'Khi nhận thông báo, nhấn vào để mở MamGo - '
-                    'trợ lý sẽ gợi ý ngay những món phù hợp với khẩu vị của bạn!',
-                    style: TextStyle(
-                        fontSize: 12, color: AppTheme.textMedium, height: 1.5)),
+                  'Khi nhận thông báo, nhấn vào để mở MamGo - '
+                  'trợ lý sẽ gợi ý ngay những món phù hợp với khẩu vị của bạn!',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textMedium,
+                    height: 1.5,
+                  ),
+                ),
               ],
             ),
           ),

@@ -1,5 +1,5 @@
 import 'package:mamgo/data/datasources/foods_data.dart';
-import 'package:mamgo/data/models/food.dart';
+import 'package:mamgo/domain/entities/food_entity.dart';
 import 'package:mamgo/domain/interface_repositories/ifood_repository.dart';
 
 class FoodRepositoryImpl implements IFoodRepository {
@@ -15,9 +15,11 @@ class FoodRepositoryImpl implements IFoodRepository {
   List<Food> searchFoods(String query) {
     final q = query.toLowerCase();
     return FoodsData.all
-        .where((f) =>
-            f.name.toLowerCase().contains(q) ||
-            f.tags.any((t) => t.contains(q)))
+        .where(
+          (f) =>
+              f.name.toLowerCase().contains(q) ||
+              f.tags.any((t) => t.contains(q)),
+        )
         .toList();
   }
 }

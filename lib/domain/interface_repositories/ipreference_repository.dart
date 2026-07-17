@@ -1,4 +1,4 @@
-import 'package:mamgo/data/models/user_preference.dart';
+import 'package:mamgo/domain/entities/user_preference_entity.dart';
 
 abstract class IPreferenceRepository {
   Future<UserPreference?> load(String email);
