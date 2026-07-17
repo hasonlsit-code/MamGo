@@ -1,10 +1,20 @@
 import 'package:mamgo/domain/entities/user_preference_entity.dart';
 import 'package:mamgo/domain/interface_repositories/ipreference_repository.dart';
 
-class SaveUserPreferenceUseCase {
+class LoadUserPreferenceService {
   final IPreferenceRepository repository;
 
-  SaveUserPreferenceUseCase(this.repository);
+  LoadUserPreferenceService(this.repository);
+
+  Future<UserPreference?> execute(String email) {
+    return repository.load(email);
+  }
+}
+
+class SaveUserPreferenceService {
+  final IPreferenceRepository repository;
+
+  SaveUserPreferenceService(this.repository);
 
   Future<SavePreferenceResult> execute(
     UserPreference preference,
@@ -35,7 +45,21 @@ class SaveUserPreferenceUseCase {
       );
     }
 
-    await repository.save(preference, email);
+    // Tạo một đối tượng mới với tên đã được làm sạch để đảm bảo dữ liệu
+    // lưu trữ được nhất quán và không có khoảng trắng thừa.
+    final preferenceToSave = UserPreference(
+      name: nameClean,
+      tastePreferences: preference.tastePreferences,
+      dietaryRestrictions: preference.dietaryRestrictions,
+      favoriteCuisines: preference.favoriteCuisines,
+      breakfastReminder: preference.breakfastReminder,
+      lunchReminder: preference.lunchReminder,
+      dinnerReminder: preference.dinnerReminder,
+      breakfastTime: preference.breakfastTime,
+      lunchTime: preference.lunchTime,
+      dinnerTime: preference.dinnerTime,
+    );
+    await repository.save(preferenceToSave, email);
     return const SavePreferenceResult.success();
   }
 }
@@ -44,9 +68,7 @@ class SavePreferenceResult {
   final String? errorMessage;
   final bool isSuccess;
 
-  const SavePreferenceResult.success()
-      : errorMessage = null,
-        isSuccess = true;
+  const SavePreferenceResult.success() : errorMessage = null, isSuccess = true;
 
   const SavePreferenceResult.error(this.errorMessage) : isSuccess = false;
 }

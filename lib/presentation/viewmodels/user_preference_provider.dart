@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:mamgo/domain/entities/user_preference_entity.dart';
-import 'package:mamgo/domain/service/load_user_preference_service.dart';
-import 'package:mamgo/domain/service/save_user_preference_usecase.dart';
+import 'package:mamgo/domain/service/user_preference_service.dart';
 import 'package:mamgo/data/repositories/preference_repository_impl.dart';
 import 'package:mamgo/data/datasources/notification_datasource.dart';
 
 class UserPreferenceProvider extends ChangeNotifier {
-  final LoadUserPreferenceUseCase _loadUseCase;
-  final SaveUserPreferenceUseCase _saveUseCase;
+  final LoadUserPreferenceService _loadUseCase;
+  final SaveUserPreferenceService _saveUseCase;
   UserPreference? _pref;
   bool _loading = true;
 
   UserPreferenceProvider({
-    LoadUserPreferenceUseCase? loadUseCase,
-    SaveUserPreferenceUseCase? saveUseCase,
+    LoadUserPreferenceService? loadUseCase,
+    SaveUserPreferenceService? saveUseCase,
   }) : _loadUseCase =
-           loadUseCase ?? LoadUserPreferenceUseCase(PreferenceRepositoryImpl()),
+           loadUseCase ?? LoadUserPreferenceService(PreferenceRepositoryImpl()),
        _saveUseCase =
-           saveUseCase ?? SaveUserPreferenceUseCase(PreferenceRepositoryImpl());
+           saveUseCase ?? SaveUserPreferenceService(PreferenceRepositoryImpl());
 
   UserPreference? get preference => _pref;
   bool get isLoading => _loading;
