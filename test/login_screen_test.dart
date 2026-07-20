@@ -63,6 +63,7 @@ class MockUserPreferenceProvider extends ChangeNotifier
   Future<void> clear() async {}
 }
 
+// Bọc màn hình Login bằng các Provider giả lập để chạy test độc lập không cần Backend.
 Future<void> pumpDemoApp(WidgetTester tester) async {
   await tester.pumpWidget(
     MultiProvider(
