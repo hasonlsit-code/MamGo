@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:mamgo/data/models/user_preference.dart';
-import 'package:mamgo/data/datasources/preference_service.dart';
-import 'package:mamgo/data/datasources/notification_service.dart';
+import 'package:mamgo/domain/entities/user_preference_entity.dart';
+import 'package:mamgo/domain/service/user_preference_service.dart';
+import 'package:mamgo/data/repositories/preference_repository_impl.dart';
+import 'package:mamgo/data/datasources/notification_datasource.dart';
 
 class UserPreferenceProvider extends ChangeNotifier {
-  final _svc = PreferenceService();
+  final LoadUserPreferenceService _loadUseCase;
+  final SaveUserPreferenceService _saveUseCase;
   UserPreference? _pref;
   bool _loading = true;
+
+  UserPreferenceProvider({
+    LoadUserPreferenceService? loadUseCase,
+    SaveUserPreferenceService? saveUseCase,
+  }) : _loadUseCase =
+           loadUseCase ?? LoadUserPreferenceService(PreferenceRepositoryImpl()),
+       _saveUseCase =
+           saveUseCase ?? SaveUserPreferenceService(PreferenceRepositoryImpl());
 
   UserPreference? get preference => _pref;
   bool get isLoading => _loading;
@@ -15,16 +25,18 @@ class UserPreferenceProvider extends ChangeNotifier {
   Future<void> load(String email) async {
     _loading = true;
     notifyListeners();
-    _pref = await _svc.load(email);
+    _pref = await _loadUseCase.execute(email);
     _loading = false;
     notifyListeners();
   }
 
-  Future<void> save(UserPreference pref, String email) async {
-    await _svc.save(pref, email);
+  Future<String?> save(UserPreference pref, String email) async {
+    final result = await _saveUseCase.execute(pref, email);
+    if (!result.isSuccess) return result.errorMessage;
     _pref = pref;
     await _syncNotifications();
     notifyListeners();
+    return null;
   }
 
   Future<void> clear() async {

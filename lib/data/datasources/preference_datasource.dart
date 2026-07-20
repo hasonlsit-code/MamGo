@@ -1,7 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mamgo/data/models/user_preference.dart';
 
-class PreferenceService {
+class PreferenceDatasource {
   static const _onboardingKey = 'onboarding_done';
 
   String _getKey(String email, String key) {
@@ -14,7 +14,7 @@ class PreferenceService {
     return p.getBool(_getKey(email, _onboardingKey)) ?? false;
   }
 
-  Future<void> save(UserPreference pref, String email) async {
+  Future<void> save(UserPreferenceModel pref, String email) async {
     final p = await SharedPreferences.getInstance();
     final map = pref.toMap();
     for (final e in map.entries) {
@@ -28,15 +28,17 @@ class PreferenceService {
     await p.setBool(_getKey(email, _onboardingKey), true);
   }
 
-  Future<UserPreference?> load(String email) async {
+  Future<UserPreferenceModel?> load(String email) async {
     final p = await SharedPreferences.getInstance();
     if (!(p.getBool(_getKey(email, _onboardingKey)) ?? false)) return null;
-    return UserPreference.fromMap({
+    return UserPreferenceModel.fromMap({
       'name': p.getString(_getKey(email, 'name')) ?? '',
       'tastePreferences': p.getString(_getKey(email, 'tastePreferences')) ?? '',
-      'dietaryRestrictions': p.getString(_getKey(email, 'dietaryRestrictions')) ?? '',
+      'dietaryRestrictions':
+          p.getString(_getKey(email, 'dietaryRestrictions')) ?? '',
       'favoriteCuisines': p.getString(_getKey(email, 'favoriteCuisines')) ?? '',
-      'breakfastReminder': p.getBool(_getKey(email, 'breakfastReminder')) ?? false,
+      'breakfastReminder':
+          p.getBool(_getKey(email, 'breakfastReminder')) ?? false,
       'lunchReminder': p.getBool(_getKey(email, 'lunchReminder')) ?? false,
       'dinnerReminder': p.getBool(_getKey(email, 'dinnerReminder')) ?? false,
       'breakfastTime': p.getString(_getKey(email, 'breakfastTime')) ?? '07:00',

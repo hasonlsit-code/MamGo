@@ -95,7 +95,9 @@ class ProfileScreen extends StatelessWidget {
                           Text(
                             email,
                             style: const TextStyle(
-                                color: Colors.white70, fontSize: 13),
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -135,21 +137,26 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 8),
               OutlinedButton.icon(
                 onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (_) => const OnboardingScreen()),
+                  MaterialPageRoute(builder: (_) => const OnboardingScreen()),
                 ),
-                icon: const Icon(Icons.edit_rounded,
-                    size: 18, color: AppTheme.primary),
+                icon: const Icon(
+                  Icons.edit_rounded,
+                  size: 18,
+                  color: AppTheme.primary,
+                ),
                 label: const Text(
                   'Cập nhật sở thích',
                   style: TextStyle(
-                      color: AppTheme.primary, fontWeight: FontWeight.w600),
+                    color: AppTheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppTheme.primary),
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ],
@@ -160,7 +167,8 @@ class ProfileScreen extends StatelessWidget {
             GestureDetector(
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                    builder: (_) => const NotificationSettingsScreen()),
+                  builder: (_) => const NotificationSettingsScreen(),
+                ),
               ),
               child: Container(
                 padding: const EdgeInsets.all(14),
@@ -178,8 +186,11 @@ class ProfileScreen extends StatelessWidget {
                         color: const Color(0xFFFFF0E0),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.notifications_active_rounded,
-                          color: AppTheme.orange, size: 20),
+                      child: const Icon(
+                        Icons.notifications_active_rounded,
+                        color: AppTheme.orange,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     const Expanded(
@@ -198,13 +209,17 @@ class ProfileScreen extends StatelessWidget {
                           Text(
                             'Bật/tắt và chỉnh giờ nhắc ăn sáng, trưa, tối',
                             style: TextStyle(
-                                fontSize: 12, color: AppTheme.textMedium),
+                              fontSize: 12,
+                              color: AppTheme.textMedium,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right_rounded,
-                        color: AppTheme.textMedium),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppTheme.textMedium,
+                    ),
                   ],
                 ),
               ),
@@ -227,8 +242,11 @@ class ProfileScreen extends StatelessWidget {
                       color: AppTheme.chipBg,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.smart_toy_rounded,
-                        color: AppTheme.primary, size: 20),
+                    child: const Icon(
+                      Icons.smart_toy_rounded,
+                      color: AppTheme.primary,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
@@ -247,7 +265,9 @@ class ProfileScreen extends StatelessWidget {
                         Text(
                           'Hiện trợ lý nổi trên mọi màn hình',
                           style: TextStyle(
-                              fontSize: 12, color: AppTheme.textMedium),
+                            fontSize: 12,
+                            color: AppTheme.textMedium,
+                          ),
                         ),
                       ],
                     ),
@@ -277,7 +297,8 @@ class ProfileScreen extends StatelessWidget {
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
           ],
@@ -297,10 +318,11 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _infoCard(
-      {required IconData icon,
-      required String title,
-      required String value}) {
+  Widget _infoCard({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -328,7 +350,9 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                      fontSize: 12, color: AppTheme.textMedium),
+                    fontSize: 12,
+                    color: AppTheme.textMedium,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -351,21 +375,26 @@ class ProfileScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Đăng xuất'),
         content: const Text('Bạn có chắc muốn đăng xuất khỏi MamGo?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Hủy',
-                style: TextStyle(color: AppTheme.textMedium)),
+            child: const Text(
+              'Hủy',
+              style: TextStyle(color: AppTheme.textMedium),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Đăng xuất',
-                style: TextStyle(
-                    color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Đăng xuất',
+              style: TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),

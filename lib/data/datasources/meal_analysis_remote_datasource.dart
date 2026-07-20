@@ -7,8 +7,9 @@ import 'package:mamgo/data/datasources/gemini_service.dart';
 import 'package:mamgo/data/models/meal_analysis.dart';
 
 /// Phân tích ảnh bữa ăn bằng Gemini Vision, trả về ước tính dinh dưỡng.
-class MealAnalysisService {
-  static const _apiKey = GeminiService.apiKey; // key đặt tại gemini_service.dart
+class MealAnalysisDataSource {
+  static const _apiKey =
+      GeminiService.apiKey; // key đặt tại gemini_service.dart
   // Dùng chung model với chat (gemini_service.dart) để gộp chung 1 quota bucket.
   static const _modelName = GeminiService.modelName;
 
@@ -58,12 +59,11 @@ Tối đa 5 items và 3 suggestions. Nếu ảnh không phải đồ ăn, trả 
           responseMimeType: 'application/json',
         ),
       );
-      final response = await model.generateContent([
-        Content.multi([
-          TextPart(_prompt),
-          DataPart(mimeType, imageBytes),
-        ]),
-      ]).timeout(const Duration(seconds: 45));
+      final response = await model
+          .generateContent([
+            Content.multi([TextPart(_prompt), DataPart(mimeType, imageBytes)]),
+          ])
+          .timeout(const Duration(seconds: 45));
 
       rawText = response.text?.trim() ?? '';
       if (rawText.isEmpty) {

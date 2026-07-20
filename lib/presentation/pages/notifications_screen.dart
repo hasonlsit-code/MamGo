@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
-import 'package:mamgo/data/datasources/notification_log_service.dart';
+import 'package:mamgo/data/datasources/notification_log_datasource.dart';
+import 'package:mamgo/data/models/notification_entry.dart';
 
 /// Trung tâm thông báo: xem lại các thông báo THẬT đã xảy ra, đúng thời điểm
 /// theo đồng hồ máy lúc đó (không phải tính toán giả lập).
@@ -54,31 +55,33 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         title: const Text(
           'Thông báo',
           style: TextStyle(
-              color: AppTheme.textDark,
-              fontWeight: FontWeight.bold,
-              fontSize: 18),
+            color: AppTheme.textDark,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
       ),
       body: entries == null
           ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.primary))
+              child: CircularProgressIndicator(color: AppTheme.primary),
+            )
           : entries.isEmpty
-              ? _emptyState()
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  color: AppTheme.primary,
-                  child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(
-                        parent: BouncingScrollPhysics()),
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                    children: groups.entries
-                        .expand((g) => [
-                              _dayHeader(g.key),
-                              ...g.value.map(_entryTile),
-                            ])
-                        .toList(),
-                  ),
+          ? _emptyState()
+          : RefreshIndicator(
+              onRefresh: _load,
+              color: AppTheme.primary,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
                 ),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                children: groups.entries
+                    .expand(
+                      (g) => [_dayHeader(g.key), ...g.value.map(_entryTile)],
+                    )
+                    .toList(),
+              ),
+            ),
     );
   }
 
@@ -158,9 +161,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     Text(
                       '$hh:$mm:$ss',
                       style: const TextStyle(
-                          fontSize: 11.5,
-                          color: AppTheme.textMedium,
-                          fontFamily: 'monospace'),
+                        fontSize: 11.5,
+                        color: AppTheme.textMedium,
+                        fontFamily: 'monospace',
+                      ),
                     ),
                   ],
                 ),
@@ -168,9 +172,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 Text(
                   e.body,
                   style: const TextStyle(
-                      fontSize: 12.5,
-                      color: AppTheme.textMedium,
-                      height: 1.4),
+                    fontSize: 12.5,
+                    color: AppTheme.textMedium,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
@@ -184,12 +189,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Center(
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics()),
+          parent: BouncingScrollPhysics(),
+        ),
         shrinkWrap: true,
         children: const [
           SizedBox(height: 120),
-          Icon(Icons.notifications_off_outlined,
-              size: 56, color: AppTheme.textMedium),
+          Icon(
+            Icons.notifications_off_outlined,
+            size: 56,
+            color: AppTheme.textMedium,
+          ),
           SizedBox(height: 12),
           Text(
             'Chưa có thông báo nào',

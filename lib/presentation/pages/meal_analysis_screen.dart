@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mamgo/core/constants/app_theme.dart';
-import 'package:mamgo/data/datasources/meal_analysis_service.dart';
+import 'package:mamgo/data/datasources/meal_analysis_remote_datasource.dart';
 import 'package:mamgo/data/datasources/meal_log_service.dart';
 import 'package:mamgo/data/models/meal_analysis.dart';
 import 'package:mamgo/data/models/meal_log_entry.dart';
@@ -42,7 +42,9 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
         _analysis = null;
       });
     } catch (e) {
-      _showMessage('Không mở được ${source == ImageSource.camera ? "camera" : "thư viện"} 😓');
+      _showMessage(
+        'Không mở được ${source == ImageSource.camera ? "camera" : "thư viện"} 😓',
+      );
     }
   }
 
@@ -70,8 +72,10 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
       _loading = true;
       _showDebug = false;
     });
-    final (result, error, debugDetail) =
-        await MealAnalysisService.analyze(bytes, mimeType: _imageMimeType);
+    final (result, error, debugDetail) = await MealAnalysisDataSource.analyze(
+      bytes,
+      mimeType: _imageMimeType,
+    );
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -85,21 +89,25 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
   Future<void> _saveMeal() async {
     final a = _analysis;
     if (a == null) return;
-    await MealLogService.add(MealLogEntry(
-      time: DateTime.now(),
-      totalKcal: a.totalKcal,
-      items: a.items.map((i) => i.name).toList(),
-    ));
+    await MealLogService.add(
+      MealLogEntry(
+        time: DateTime.now(),
+        totalKcal: a.totalKcal,
+        items: a.items.map((i) => i.name).toList(),
+      ),
+    );
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('✅ Đã lưu bữa ăn ${a.totalKcal} kcal!'),
-      action: SnackBarAction(
-        label: 'Xem nhật ký',
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const MealDiaryScreen()),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✅ Đã lưu bữa ăn ${a.totalKcal} kcal!'),
+        action: SnackBarAction(
+          label: 'Xem nhật ký',
+          onPressed: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const MealDiaryScreen())),
         ),
       ),
-    ));
+    );
   }
 
   void _showMessage(String msg) {
@@ -128,16 +136,20 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Row(
                 children: [
-                  const Icon(Icons.bug_report_outlined,
-                      size: 16, color: AppTheme.textMedium),
+                  const Icon(
+                    Icons.bug_report_outlined,
+                    size: 16,
+                    color: AppTheme.textMedium,
+                  ),
                   const SizedBox(width: 6),
                   const Expanded(
                     child: Text(
                       'Xem phản hồi AI (debug)',
                       style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textMedium),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textMedium,
+                      ),
                     ),
                   ),
                   Icon(
@@ -183,7 +195,10 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
                         _showMessage('Đã sao chép chi tiết');
                       },
                       icon: const Icon(Icons.copy_rounded, size: 14),
-                      label: const Text('Sao chép', style: TextStyle(fontSize: 12)),
+                      label: const Text(
+                        'Sao chép',
+                        style: TextStyle(fontSize: 12),
+                      ),
                       style: TextButton.styleFrom(
                         foregroundColor: AppTheme.primary,
                         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -235,20 +250,25 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
                 const SizedBox(height: 18),
                 OutlinedButton.icon(
                   onPressed: _saveMeal,
-                  icon: const Icon(Icons.bookmark_border_rounded,
-                      color: AppTheme.primary, size: 20),
+                  icon: const Icon(
+                    Icons.bookmark_border_rounded,
+                    color: AppTheme.primary,
+                    size: 20,
+                  ),
                   label: const Text(
                     'Lưu bữa ăn',
                     style: TextStyle(
-                        color: AppTheme.primary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold),
+                      color: AppTheme.primary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppTheme.primary, width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                 ),
               ],
@@ -268,15 +288,16 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
             children: [
               RichText(
                 text: const TextSpan(
-                  style:
-                      TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
                   children: [
                     TextSpan(
-                        text: 'Phân tích ',
-                        style: TextStyle(color: AppTheme.primary)),
+                      text: 'Phân tích ',
+                      style: TextStyle(color: AppTheme.primary),
+                    ),
                     TextSpan(
-                        text: 'bữa ăn',
-                        style: TextStyle(color: AppTheme.orange)),
+                      text: 'bữa ăn',
+                      style: TextStyle(color: AppTheme.orange),
+                    ),
                   ],
                 ),
               ),
@@ -296,9 +317,9 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
 
   Widget _buildDiaryButton() {
     return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const MealDiaryScreen()),
-      ),
+      onTap: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const MealDiaryScreen())),
       child: Container(
         width: 44,
         height: 44,
@@ -313,8 +334,11 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
             ),
           ],
         ),
-        child: const Icon(Icons.menu_book_rounded,
-            color: AppTheme.primary, size: 20),
+        child: const Icon(
+          Icons.menu_book_rounded,
+          color: AppTheme.primary,
+          size: 20,
+        ),
       ),
     );
   }
@@ -339,7 +363,10 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
             child: const Text(
               'Hãy chụp bữa ăn của bạn để mình đánh giá xem đủ dinh dưỡng không nhé! 📸',
               style: TextStyle(
-                  color: AppTheme.textDark, fontSize: 13.5, height: 1.45),
+                color: AppTheme.textDark,
+                fontSize: 13.5,
+                height: 1.45,
+              ),
             ),
           ),
         ),
@@ -367,16 +394,20 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
                 color: AppTheme.chipBg,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.restaurant_rounded,
-                  color: AppTheme.primary, size: 32),
+              child: const Icon(
+                Icons.restaurant_rounded,
+                color: AppTheme.primary,
+                size: 32,
+              ),
             ),
             const SizedBox(height: 12),
             const Text(
               'Đặt món ăn vào khung hình',
               style: TextStyle(
-                  color: AppTheme.textMedium,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500),
+                color: AppTheme.textMedium,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             const SizedBox(height: 18),
             Row(
@@ -464,8 +495,11 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
         ),
         child: Row(
           children: [
-            Icon(icon,
-                color: primary ? Colors.white : AppTheme.primary, size: 18),
+            Icon(
+              icon,
+              color: primary ? Colors.white : AppTheme.primary,
+              size: 18,
+            ),
             const SizedBox(width: 7),
             Text(
               label,
@@ -501,9 +535,10 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
             Text(
               label,
               style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600),
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -531,21 +566,30 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                    strokeWidth: 2.5, color: Colors.white),
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
               )
-            : const Icon(Icons.auto_awesome_rounded,
-                color: Colors.white, size: 20),
+            : const Icon(
+                Icons.auto_awesome_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
         label: Text(
           _loading ? 'AI đang phân tích...' : 'Phân tích bữa ăn',
           style: const TextStyle(
-              fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
           padding: const EdgeInsets.symmetric(vertical: 14),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
     );
@@ -558,8 +602,8 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
     final confidenceColor = a.confidence == 'cao'
         ? AppTheme.success
         : a.confidence == 'thấp'
-            ? Colors.redAccent
-            : AppTheme.orange;
+        ? Colors.redAccent
+        : AppTheme.orange;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -579,8 +623,11 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
                   color: const Color(0xFFFFF0E0),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.local_fire_department_rounded,
-                    color: AppTheme.orange, size: 28),
+                child: const Icon(
+                  Icons.local_fire_department_rounded,
+                  color: AppTheme.orange,
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -590,7 +637,9 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
                     const Text(
                       'Tổng ước tính',
                       style: TextStyle(
-                          color: AppTheme.textMedium, fontSize: 12),
+                        color: AppTheme.textMedium,
+                        fontSize: 12,
+                      ),
                     ),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -610,9 +659,10 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
                           child: Text(
                             'kcal',
                             style: TextStyle(
-                                color: AppTheme.orange,
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold),
+                              color: AppTheme.orange,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -625,15 +675,20 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 5),
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: confidenceColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle_rounded,
-                            color: confidenceColor, size: 14),
+                        Icon(
+                          Icons.check_circle_rounded,
+                          color: confidenceColor,
+                          size: 14,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'Độ tin cậy ${a.confidence}',
@@ -651,7 +706,9 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
                     Text(
                       'Cập nhật: hôm nay, $hh:$mm',
                       style: const TextStyle(
-                          color: AppTheme.textMedium, fontSize: 11),
+                        color: AppTheme.textMedium,
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ],
@@ -672,54 +729,63 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            ...a.items.map((i) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 5),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          color: AppTheme.chipBg,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.restaurant_rounded,
-                            color: AppTheme.primary, size: 16),
+            ...a.items.map(
+              (i) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: AppTheme.chipBg,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            style: const TextStyle(
-                                fontSize: 13.5, color: AppTheme.textDark),
-                            children: [
-                              TextSpan(
-                                text: i.name,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w600),
-                              ),
-                              if (i.note.isNotEmpty)
-                                TextSpan(
-                                  text: ' (${i.note})',
-                                  style: const TextStyle(
-                                      color: AppTheme.textMedium,
-                                      fontSize: 12),
-                                ),
-                            ],
+                      child: const Icon(
+                        Icons.restaurant_rounded,
+                        color: AppTheme.primary,
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            color: AppTheme.textDark,
                           ),
+                          children: [
+                            TextSpan(
+                              text: i.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (i.note.isNotEmpty)
+                              TextSpan(
+                                text: ' (${i.note})',
+                                style: const TextStyle(
+                                  color: AppTheme.textMedium,
+                                  fontSize: 12,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                      Text(
-                        '${i.kcal} kcal',
-                        style: const TextStyle(
-                          color: AppTheme.textDark,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    ),
+                    Text(
+                      '${i.kcal} kcal',
+                      style: const TextStyle(
+                        color: AppTheme.textDark,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
-                  ),
-                )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ],
       ),
@@ -741,29 +807,39 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
       child: Row(
         children: [
           Expanded(
-              child: _macroColumn(
-                  'Protein', a.proteinG, pct(a.proteinG), AppTheme.primary)),
+            child: _macroColumn(
+              'Protein',
+              a.proteinG,
+              pct(a.proteinG),
+              AppTheme.primary,
+            ),
+          ),
           const SizedBox(width: 14),
           Expanded(
-              child: _macroColumn(
-                  'Carb', a.carbG, pct(a.carbG), AppTheme.orange)),
+            child: _macroColumn('Carb', a.carbG, pct(a.carbG), AppTheme.orange),
+          ),
           const SizedBox(width: 14),
           Expanded(
-              child:
-                  _macroColumn('Fat', a.fatG, pct(a.fatG), AppTheme.success)),
+            child: _macroColumn('Fat', a.fatG, pct(a.fatG), AppTheme.success),
+          ),
           const SizedBox(width: 14),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Chất xơ',
-                  style: TextStyle(
-                      color: AppTheme.textDark,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600)),
+              const Text(
+                'Chất xơ',
+                style: TextStyle(
+                  color: AppTheme.textDark,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 6),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: AppTheme.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -788,31 +864,39 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                color: AppTheme.textDark,
-                fontSize: 13,
-                fontWeight: FontWeight.w600)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppTheme.textDark,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(height: 4),
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text('$grams',
-                style: const TextStyle(
-                    color: AppTheme.textDark,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900)),
+            Text(
+              '$grams',
+              style: const TextStyle(
+                color: AppTheme.textDark,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
             const SizedBox(width: 2),
             const Padding(
               padding: EdgeInsets.only(bottom: 2),
-              child: Text('g',
-                  style: TextStyle(
-                      color: AppTheme.textMedium, fontSize: 11)),
+              child: Text(
+                'g',
+                style: TextStyle(color: AppTheme.textMedium, fontSize: 11),
+              ),
             ),
             const Spacer(),
-            Text('${(pct * 100).round()}%',
-                style: const TextStyle(
-                    color: AppTheme.textMedium, fontSize: 11)),
+            Text(
+              '${(pct * 100).round()}%',
+              style: const TextStyle(color: AppTheme.textMedium, fontSize: 11),
+            ),
           ],
         ),
         const SizedBox(height: 5),
@@ -849,17 +933,22 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
                 RichText(
                   text: const TextSpan(
                     style: TextStyle(
-                        fontSize: 14.5, fontWeight: FontWeight.bold),
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.bold,
+                    ),
                     children: [
                       TextSpan(
-                          text: 'Nhận xét từ ',
-                          style: TextStyle(color: AppTheme.textDark)),
+                        text: 'Nhận xét từ ',
+                        style: TextStyle(color: AppTheme.textDark),
+                      ),
                       TextSpan(
-                          text: 'AI Mam',
-                          style: TextStyle(color: AppTheme.primary)),
+                        text: 'AI Mam',
+                        style: TextStyle(color: AppTheme.primary),
+                      ),
                       TextSpan(
-                          text: 'Go',
-                          style: TextStyle(color: AppTheme.orange)),
+                        text: 'Go',
+                        style: TextStyle(color: AppTheme.orange),
+                      ),
                     ],
                   ),
                 ),
@@ -867,9 +956,10 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
                 Text(
                   a.comment,
                   style: const TextStyle(
-                      color: AppTheme.textDark,
-                      fontSize: 13,
-                      height: 1.5),
+                    color: AppTheme.textDark,
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -926,8 +1016,7 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
                     Text(
                       '${positive ? '+' : ''}${s.deltaKcal} kcal',
                       style: TextStyle(
-                        color:
-                            positive ? AppTheme.orange : AppTheme.success,
+                        color: positive ? AppTheme.orange : AppTheme.success,
                         fontSize: 12.5,
                         fontWeight: FontWeight.bold,
                       ),

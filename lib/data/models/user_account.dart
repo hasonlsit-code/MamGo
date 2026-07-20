@@ -1,12 +1,12 @@
-class UserAccount {
-  final String name;
-  final String email;
-  final String password;
+import 'package:mamgo/domain/entities/user_account_entity.dart';
 
-  const UserAccount({
-    required this.name,
-    required this.email,
-    required this.password,
+export 'package:mamgo/domain/entities/user_account_entity.dart';
+
+class UserAccountModel extends UserAccount {
+  const UserAccountModel({
+    required super.name,
+    required super.email,
+    required super.password,
   });
 
   Map<String, dynamic> toJson() => {
@@ -15,7 +15,7 @@ class UserAccount {
         'password': password,
       };
 
-  factory UserAccount.fromJson(Map<String, dynamic> json) => UserAccount(
+  factory UserAccountModel.fromJson(Map<String, dynamic> json) => UserAccountModel(
         name: json['name'] ?? '',
         email: json['email'] ?? '',
         password: json['password'] ?? '',
