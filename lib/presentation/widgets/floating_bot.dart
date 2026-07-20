@@ -154,9 +154,8 @@ class _FloatingBotState extends State<FloatingBot>
               ),
               child: Stack(
                 children: [
-                  const Center(
-                    child: Icon(Icons.smart_toy_rounded,
-                        color: Colors.white, size: 28),
+                  Center(
+                    child: Image.asset('chatbot.png', width: 36, height: 36),
                   ),
                   // Chấm "đang online"
                   Positioned(

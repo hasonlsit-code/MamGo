@@ -536,7 +536,7 @@ class _MealAnalysisScreenState extends State<MealAnalysisScreen> {
             : const Icon(Icons.auto_awesome_rounded,
                 color: Colors.white, size: 20),
         label: Text(
-          _loading ? 'AI đang phân tích...' : 'Nhận nhận xét AI',
+          _loading ? 'AI đang phân tích...' : 'Phân tích bữa ăn',
           style: const TextStyle(
               fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
         ),

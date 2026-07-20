@@ -392,7 +392,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 color: Colors.white.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
-              child: const Text('🤖', style: TextStyle(fontSize: 20)),
+              child: Image.asset('chatbot.png', width: 28, height: 28),
             ),
             const SizedBox(width: 10),
             const Column(
@@ -501,12 +501,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   }
 
   Widget _emptyState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('🤖', style: TextStyle(fontSize: 80)),
-          SizedBox(height: 12),
+          Image.asset('chatbot.png', width: 80, height: 80),
+          const SizedBox(height: 12),
           Text('MamGo đang khởi động...',
               style: TextStyle(color: AppTheme.textMedium, fontSize: 16)),
         ],
@@ -525,7 +525,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               color: AppTheme.primary.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: const Center(child: Text('🤖', style: TextStyle(fontSize: 18))),
+            child: Center(child: Image.asset('chatbot.png', width: 24, height: 24)),
           ),
           const SizedBox(width: 8),
           Container(

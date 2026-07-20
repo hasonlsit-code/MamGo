@@ -53,8 +53,9 @@ class ChatBubble extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       child: Center(
-        child: Text(isUser ? '😊' : '🤖',
-            style: const TextStyle(fontSize: 18)),
+        child: isUser 
+            ? const Text('😊', style: TextStyle(fontSize: 18))
+            : ClipOval(child: Image.asset('chatbot.png', width: 28, height: 28, fit: BoxFit.cover)),
       ),
     );
   }
