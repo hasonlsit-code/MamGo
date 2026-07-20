@@ -45,8 +45,6 @@ class SaveUserPreferenceService {
       );
     }
 
-    // Tạo một đối tượng mới với tên đã được làm sạch để đảm bảo dữ liệu
-    // lưu trữ được nhất quán và không có khoảng trắng thừa.
     final preferenceToSave = UserPreference(
       name: nameClean,
       tastePreferences: preference.tastePreferences,

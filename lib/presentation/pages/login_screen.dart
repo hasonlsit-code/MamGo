@@ -219,6 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TextField(
+            key: const Key('emailField'),
             controller: _emailCtrl,
             keyboardType: TextInputType.emailAddress,
             decoration: const InputDecoration(
@@ -229,6 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 14),
           TextField(
+            key: const Key('passwordField'),
             controller: _passwordCtrl,
             obscureText: _obscure,
             onSubmitted: (_) => _login(),
@@ -357,6 +359,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
       ),
       child: ElevatedButton(
+        key: const Key('loginButton'),
         onPressed: loading ? null : onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,

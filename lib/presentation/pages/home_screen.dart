@@ -943,20 +943,23 @@ class _NextMealCardState extends State<_NextMealCard> {
             ),
             child: Column(
               children: [
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.calendar_today_rounded,
-                      color: Colors.white,
-                      size: 13,
-                    ),
-                    SizedBox(width: 5),
-                    Text(
-                      'Bữa tiếp theo',
-                      style: TextStyle(color: Colors.white, fontSize: 11),
-                    ),
-                  ],
+                const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        color: Colors.white,
+                        size: 13,
+                      ),
+                      SizedBox(width: 5),
+                      Text(
+                        'Bữa tiếp theo',
+                        style: TextStyle(color: Colors.white, fontSize: 11),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
